@@ -6,14 +6,14 @@
 //
 
 import SwiftUI
+import CapsuleSwift
 
 enum NavigationDestination {
     case verifyEmail, wallet
 }
 
 struct ContentView: View {
-    
-    @StateObject var jsBridgeViewModel = JSBridgeViewModel()
+    @StateObject var capsule = CapsuleSwift.Capsule()
     @State private var email = ""
     @State private var path = [NavigationDestination]()
     
@@ -24,7 +24,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ZStack {
-                JSBridgeWebView(viewModel: jsBridgeViewModel).ignoresSafeArea()
+                CapsuleWebView(viewModel: capsule).ignoresSafeArea()
                 VStack {
                     TextField("User Name (email address)", text: $email)
                         .textInputAutocapitalization(.never)
@@ -32,19 +32,19 @@ struct ContentView: View {
                         .border(.secondary)
                     Button("Sign Up") {
                         Task.init {
-                            let userExists = await jsBridgeViewModel.checkIfUserExists(email: email)
+                            let userExists = await capsule.checkIfUserExists(email: email)
                             
                             if userExists {
                                 return
                             }
                             
-                            await jsBridgeViewModel.createUser(email: email)
+                            await capsule.createUser(email: email)
                             path.append(.verifyEmail)
                         }
                     }
                     Button("Log In") {
                         Task.init {
-                            await jsBridgeViewModel.login(authorizationController: authorizationController)
+                            await capsule.login(authorizationController: authorizationController)
                             path.append(.wallet)
                         }
                     }
@@ -53,9 +53,9 @@ struct ContentView: View {
                 .navigationDestination(for: NavigationDestination.self) { path in
                     switch path {
                     case .verifyEmail:
-                        VerifyEmailView(email: email, path: $path).environmentObject(jsBridgeViewModel)
+                        VerifyEmailView(email: email, path: $path).environmentObject(capsule)
                     case .wallet:
-                        WalletView(path: $path).environmentObject(jsBridgeViewModel)
+                        WalletView(path: $path).environmentObject(capsule)
                     }
                 }
             }
@@ -65,7 +65,7 @@ struct ContentView: View {
 
 struct VerifyEmailView: View {
     
-    @EnvironmentObject var jsBridgeViewModel: JSBridgeViewModel
+    @EnvironmentObject var capsule: CapsuleSwift.Capsule
     
     let email: String
     
@@ -81,27 +81,27 @@ struct VerifyEmailView: View {
             .border(.secondary)
         Button("Verify") {
             Task.init {
-                let biometricsId = await jsBridgeViewModel.verify(verificationCode: code)
-                await jsBridgeViewModel.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
+                let biometricsId = await capsule.verify(verificationCode: code)
+                await capsule.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
                 path.append(.wallet)
-                await jsBridgeViewModel.createWallet(skipDistributable: false)
+                await capsule.createWallet(skipDistributable: false)
             }
         }
     }
 }
 
 struct WalletView: View {
-    @EnvironmentObject var jsBridgeViewModel: JSBridgeViewModel
+    @EnvironmentObject var capsule: CapsuleSwift.Capsule
     
     @Binding var path: [NavigationDestination]
     
     var body: some View {
         VStack {
-            if let wallet = jsBridgeViewModel.wallet {
+            if let wallet = capsule.wallet {
                 Text("Wallet Address: \(wallet.address!)")
                 Button("Logout") {
                     Task.init {
-                        await jsBridgeViewModel.logout()
+                        await capsule.logout()
                         path = []
                     }
                 }

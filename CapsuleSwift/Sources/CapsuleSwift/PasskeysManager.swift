@@ -16,11 +16,13 @@ public extension Logger {
     static let authorization = Logger(subsystem: "Capsule Swift Example", category: "Passkeys Manager")
 }
 
+@available(iOS 16.4, *)
 public enum AuthorizationHandlingError: Error {
     case unknownAuthorizationResult(ASAuthorizationResult)
     case otherError
 }
 
+@available(iOS 16.4, *)
 extension AuthorizationHandlingError: LocalizedError {
     public var errorDescription: String? {
             switch self {
@@ -34,6 +36,7 @@ extension AuthorizationHandlingError: LocalizedError {
         }
 }
 
+@available(iOS 16.4, *)
 public final class PasskeysManager: NSObject, ASAuthorizationControllerDelegate {
     public weak var presentationContextProvider: ASAuthorizationControllerPresentationContextProviding?
     
