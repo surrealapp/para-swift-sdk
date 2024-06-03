@@ -13,7 +13,7 @@ enum NavigationDestination {
 }
 
 struct ContentView: View {
-    @StateObject var capsule = CapsuleSwift.Capsule()
+    @StateObject var capsule = CapsuleSwift.Capsule(environment: .dev(relyingPartyId: "optimum-seagull-discrete.ngrok-free.app", jsBridgeUrl: nil), apiKey: "63d24a09c1a0348f9b9b4cf9ddba059b")
     @State private var email = ""
     @State private var path = [NavigationDestination]()
     
@@ -32,19 +32,19 @@ struct ContentView: View {
                         .border(.secondary)
                     Button("Sign Up") {
                         Task.init {
-                            let userExists = await capsule.checkIfUserExists(email: email)
+                            let userExists = await try! capsule.checkIfUserExists(email: email)
                             
                             if userExists {
                                 return
                             }
                             
-                            await capsule.createUser(email: email)
+                            await try! capsule.createUser(email: email)
                             path.append(.verifyEmail)
                         }
                     }
                     Button("Log In") {
                         Task.init {
-                            await capsule.login(authorizationController: authorizationController)
+                            await try! capsule.login(authorizationController: authorizationController)
                             path.append(.wallet)
                         }
                     }
@@ -81,10 +81,10 @@ struct VerifyEmailView: View {
             .border(.secondary)
         Button("Verify") {
             Task.init {
-                let biometricsId = await capsule.verify(verificationCode: code)
-                await capsule.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
+                let biometricsId = await try! capsule.verify(verificationCode: code)
+                await try! capsule.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
                 path.append(.wallet)
-                await capsule.createWallet(skipDistributable: false)
+                await try! capsule.createWallet(skipDistributable: false)
             }
         }
     }
@@ -95,13 +95,27 @@ struct WalletView: View {
     
     @Binding var path: [NavigationDestination]
     
+    @State private var messageToSign = ""
+    @State private var signedMessage = ""
+    
     var body: some View {
         VStack {
             if let wallet = capsule.wallet {
                 Text("Wallet Address: \(wallet.address!)")
+                
+                TextField("Message to sign", text: $messageToSign)
+                
+                Button("Sign Message") {
+                    Task.init {
+                        signedMessage = await try! capsule.signMessage(walletId: wallet.id, message: messageToSign)
+                    }
+                }
+                
+                Text("Signed Message: \(signedMessage)")
+                
                 Button("Logout") {
                     Task.init {
-                        await capsule.logout()
+                        await try! capsule.logout()
                         path = []
                     }
                 }

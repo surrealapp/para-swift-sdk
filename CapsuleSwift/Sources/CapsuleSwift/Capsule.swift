@@ -9,6 +9,7 @@ import SwiftUI
 import UIKit
 import WebKit
 import AuthenticationServices
+import os
 
 @available(iOS 16.4, *)
 public struct CapsuleWebView: UIViewRepresentable {
@@ -31,20 +32,71 @@ public struct CapsuleWebView: UIViewRepresentable {
     }
 }
 
+public enum CapsuleEnvironment {
+    case dev(relyingPartyId: String, jsBridgeUrl: URL?)
+    case sandbox(jsBridgeUrl: URL?)
+    case beta(jsBridgeUrl: URL?)
+    case prod(jsBridgeUrl: URL?)
+    
+    var relyingPartyId: String {
+        switch self {
+        case .dev(let relyingPartyId, _):
+            return relyingPartyId
+        case .sandbox(_):
+            return ""
+        case .beta(_):
+            return ""
+        case .prod(_):
+            return ""
+        }
+    }
+    
+    var jsBridgeUrl: URL {
+        switch self {
+        case .dev(_, let jsBridgeUrl):
+            return jsBridgeUrl ?? URL(string: "http://localhost:3004")!
+        case .sandbox(let jsBridgeUrl):
+            return jsBridgeUrl ?? URL(string: "https://js-bridge.sandbox.usecapsule.com/")!
+        case .beta(let jsBridgeUrl):
+            return jsBridgeUrl ?? URL(string: "https://js-bridge.beta.usecapsule.com/")!
+        case .prod(let jsBridgeUrl):
+            return jsBridgeUrl ?? URL(string: "https://js-bridge.usecapsule.com/")!
+        }
+    }
+    
+    var name: String {
+        switch self {
+        case .dev(_ ,_):
+            return "DEV"
+        case .sandbox(_):
+            return "SANDBOX"
+        case .beta(_):
+            return "BETA"
+        case .prod(_):
+            return "PROD"
+        }
+    }
+}
+
 @available(iOS 16.4, *)
 public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScriptMessageHandler {
     private var continuation: CheckedContinuation<Any?, Error>?
     private let passkeysManager = PasskeysManager()
 
     @Published public var wallet: Wallet?
+    private let environment: CapsuleEnvironment
+    private let apiKey: String
     
     weak var webView: WKWebView? {
         didSet {
             webView?.navigationDelegate = self
         }
     }
-
-    var urlString = "https://js-bridge.sandbox.usecapsule.com/"
+    
+    public init(environment: CapsuleEnvironment, apiKey: String) {
+        self.environment = environment
+        self.apiKey = apiKey
+    }
     
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         let resp = message.body as! [String: Any]
@@ -52,7 +104,7 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
     }
     
     public func loadJsBridge() {
-        webView!.load(URLRequest(url: URL(string: urlString)!))
+        webView!.load(URLRequest(url: environment.jsBridgeUrl))
     }
     
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
@@ -64,8 +116,8 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
       window.postMessage({
         messageType: 'Capsule#init',
         arguments: {
-          environment: 'SANDBOX',
-          apiKey: '8ee2d015fbc6062a6e30bdc472f2946c',
+          environment: '\(environment.name)',
+          apiKey: '\(apiKey)',
           platform: 'ios',
         }
       });
@@ -86,30 +138,30 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
         }
     }
     
-    public func checkIfUserExists(email: String) async -> Bool {
-        let result = try! await postMessage(method: "checkIfUserExists", arguments: [email])
+    public func checkIfUserExists(email: String) async throws -> Bool {
+        let result = try await postMessage(method: "checkIfUserExists", arguments: [email])
         return result as! Bool
     }
     
-    public func createUser(email: String) async {
-        try! await postMessage(method: "createUser", arguments: [email])
+    public func createUser(email: String) async throws {
+        try await postMessage(method: "createUser", arguments: [email])
         return
     }
     
-    public func login(authorizationController: AuthorizationController) async {
-        let getWebChallengeResult = try! await postMessage(method: "getWebChallenge", arguments: [])
+    public func login(authorizationController: AuthorizationController) async throws {
+        let getWebChallengeResult = try await postMessage(method: "getWebChallenge", arguments: [])
         let challenge = (getWebChallengeResult as! [String: String])["challenge"]!
-        let signIntoPasskeyAccountResult = try! await passkeysManager.signIntoPasskeyAccount(authorizationController: authorizationController, challenge: challenge)
+        let signIntoPasskeyAccountResult = try await passkeysManager.signIntoPasskeyAccount(authorizationController: authorizationController, challenge: challenge)
         
         let id = signIntoPasskeyAccountResult.credentialID.base64URLEncodedString()
         let authenticatorData = signIntoPasskeyAccountResult.rawAuthenticatorData.base64URLEncodedString()
         let clientDataJSON = signIntoPasskeyAccountResult.rawClientDataJSON.base64URLEncodedString()
         let signature = signIntoPasskeyAccountResult.signature.base64URLEncodedString()
         
-        let verifyWebChallengeResult = try! await postMessage(method: "verifyWebChallenge", arguments: [id, authenticatorData, clientDataJSON, signature])
+        let verifyWebChallengeResult = try await postMessage(method: "verifyWebChallenge", arguments: [id, authenticatorData, clientDataJSON, signature])
         let userId = verifyWebChallengeResult as! String
         
-        let wallet = try! await postMessage(method: "login", arguments: [userId, id, signIntoPasskeyAccountResult.userID.base64URLEncodedString()])
+        let wallet = try await postMessage(method: "login", arguments: [userId, id, signIntoPasskeyAccountResult.userID.base64URLEncodedString()])
         self.wallet = Wallet(result: (wallet as! [String: Any]))
     }
     
@@ -120,30 +172,35 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
         return String(biometricsId)
     }
     
-    public func generatePasskey(email: String, biometricsId: String, authorizationController: AuthorizationController) async {
-        var userHandle = Data(count: 64)
+    public func generatePasskey(email: String, biometricsId: String, authorizationController: AuthorizationController) async throws {
+        var userHandle = Data(count: 32)
         let _ = userHandle.withUnsafeMutableBytes {
-            SecRandomCopyBytes(kSecRandomDefault, 64, $0.baseAddress!)
+            SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!)
         }
         
         let userHandleEncoded = userHandle.base64URLEncodedString()
-        let result = try! await passkeysManager.createPasskeyAccount(authorizationController: authorizationController, username: email, userHandle: userHandle)
+        let result = try await passkeysManager.createPasskeyAccount(authorizationController: authorizationController, username: email, userHandle: userHandle)
         
         let attestationObjectEncoded = result.rawAttestationObject!.base64URLEncodedString()
         let clientDataJSONEncoded = result.rawClientDataJSON.base64URLEncodedString()
         let credentialIDEncoded = result.credentialID.base64URLEncodedString()
         
-        try! await postMessage(method: "generatePasskey", arguments: [attestationObjectEncoded, clientDataJSONEncoded, credentialIDEncoded, userHandleEncoded, biometricsId])
+        try await postMessage(method: "generatePasskey", arguments: [attestationObjectEncoded, clientDataJSONEncoded, credentialIDEncoded, userHandleEncoded, biometricsId])
     }
     
-    public func createWallet(skipDistributable: Bool) async {
-        let result = try! await postMessage(method: "createWallet", arguments: [skipDistributable])
+    public func createWallet(skipDistributable: Bool) async throws {
+        let result = try await postMessage(method: "createWallet", arguments: [skipDistributable])
         let walletAndRecovery = (result as! [[String: Any]])[0]
         self.wallet = Wallet(result: (walletAndRecovery["wallet"] as! [String: String]))
     }
     
-    public func logout() async {
-        try! await postMessage(method: "logout", arguments: [])
+    public func signMessage(walletId: String, message: String) async throws -> String {
+        let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
+        return (result as! [String: String])["signature"]!
+    }
+    
+    public func logout() async throws {
+        try await postMessage(method: "logout", arguments: [])
         wallet = nil
     }
 }
@@ -162,48 +219,4 @@ public struct Wallet {
     }
 }
 
-extension Data {
 
-    /// Instantiates data by decoding a base64url string into base64
-    ///
-    /// - Parameter string: A base64url encoded string
-    init?(base64URLEncoded string: String) {
-        self.init(base64Encoded: string.toggleBase64URLSafe(on: false))
-    }
-
-    /// Encodes the string into a base64url safe representation
-    ///
-    /// - Returns: A string that is base64 encoded but made safe for passing
-    ///            in as a query parameter into a URL string
-    func base64URLEncodedString() -> String {
-        return self.base64EncodedString().toggleBase64URLSafe(on: true)
-    }
-
-}
-
-extension String {
-
-    /// Encodes or decodes into a base64url safe representation
-    ///
-    /// - Parameter on: Whether or not the string should be made safe for URL strings
-    /// - Returns: if `on`, then a base64url string; if `off` then a base64 string
-    func toggleBase64URLSafe(on: Bool) -> String {
-        if on {
-            // Make base64 string safe for passing into URL query params
-            let base64url = self.replacingOccurrences(of: "/", with: "_")
-                .replacingOccurrences(of: "+", with: "-")
-                .replacingOccurrences(of: "=", with: "")
-            return base64url
-        } else {
-            // Return to base64 encoding
-            var base64 = self.replacingOccurrences(of: "_", with: "/")
-                .replacingOccurrences(of: "-", with: "+")
-            // Add any necessary padding with `=`
-            if base64.count % 4 != 0 {
-                base64.append(String(repeating: "=", count: 4 - base64.count % 4))
-            }
-            return base64
-        }
-    }
-
-}

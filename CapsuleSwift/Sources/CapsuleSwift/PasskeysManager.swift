@@ -12,9 +12,7 @@ import SwiftUI
 import Combine
 import os
 
-public extension Logger {
-    static let authorization = Logger(subsystem: "Capsule Swift Example", category: "Passkeys Manager")
-}
+
 
 @available(iOS 16.4, *)
 public enum AuthorizationHandlingError: Error {
@@ -69,37 +67,7 @@ public final class PasskeysManager: NSObject, ASAuthorizationControllerDelegate 
         default:
             throw AuthorizationHandlingError.unknownAuthorizationResult(authorizationResult)
         }
-        
-//        return try await withCheckedThrowingContinuation { continuation in
-//            registrationContinuation = continuation
-//        }
-//        do {
-//            let authorizationResult = try await authorizationController.performRequests(
-//                    [passkeyRegistrationRequest(username: username, userHandle: userHandle)],
-//                    options: options
-//            )
-//            try await handleAuthorizationResult(authorizationResult, username: username)
-//        } catch let authorizationError as ASAuthorizationError where authorizationError.code == .canceled {
-//            // The user cancelled the registration.
-//            Logger.authorization.log("The user cancelled passkey registration.")
-//        } catch let authorizationError as ASAuthorizationError {
-//            // Some other error occurred occurred during registration.
-//            Logger.authorization.error("Passkey registration failed. Error: \(authorizationError.localizedDescription)")
-//        } catch AuthorizationHandlingError.unknownAuthorizationResult(let authorizationResult) {
-//            // Received an unknown response.
-//            Logger.authorization.error("""
-//            Passkey registration handling failed. \
-//            Received an unknown result: \(String(describing: authorizationResult))
-//            """)
-//        } catch {
-//            // Some other error occurred while handling the registration.
-//            Logger.authorization.error("""
-//            Passkey registration handling failed. \
-//            Caught an unknown error during passkey registration or handling: \(error.localizedDescription).
-//            """)
-//        }
     }
-    // MARK: - Private
 
     private static let relyingPartyIdentifier = "optimum-seagull-discrete.ngrok-free.app"
     
