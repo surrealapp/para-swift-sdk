@@ -194,8 +194,48 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
         self.wallet = Wallet(result: (walletAndRecovery["wallet"] as! [String: String]))
     }
     
+    public func setup2FA() async throws -> String {
+        let result = try await postMessage(method: "setup2FA", arguments: [])
+        return (result as! [String: String])["uri"]!
+    }
+    
+    public func enable2FA() async throws {
+        let result = try await postMessage(method: "enable2FA", arguments: [])
+    }
+
+    public func check2FAStatus() async throws -> String {
+        let result = try await postMessage(method: "resendVerificationCode", arguments: [])
+        return (result as! [String: String])["isSetup"]!
+    }
+    
+    public func resendVerificationCode() async throws {
+        try await postMessage(method: "resendVerificationCode", arguments: [])
+    }
+    
+    public func isFullyLoggedIn() async throws -> Bool {
+        let result = try await postMessage(method: "isFullyLoggedIn", arguments: [])
+        return result as! Bool
+    }
+
+    public func isSessionActive() async throws -> Bool {
+        let result = try await postMessage(method: "isSessionActive", arguments: [])
+        return result as? Bool ?? false
+    }
+    
     public func signMessage(walletId: String, message: String) async throws -> String {
         let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
+        return (result as! [String: String])["signature"]!
+    }
+    
+    public func signTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
+        let result = try await postMessage(method: "signTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
+        
+        return (result as! [String: String])["signature"]!
+    }
+    
+    public func sendTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
+        let result = try await postMessage(method: "sendTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
+        
         return (result as! [String: String])["signature"]!
     }
     
