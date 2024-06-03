@@ -13,7 +13,7 @@ enum NavigationDestination {
 }
 
 struct ContentView: View {
-    @StateObject var capsule = CapsuleSwift.Capsule(environment: .dev(relyingPartyId: "optimum-seagull-discrete.ngrok-free.app", jsBridgeUrl: nil), apiKey: "63d24a09c1a0348f9b9b4cf9ddba059b")
+    @StateObject var capsule = CapsuleSwift.Capsule(environment: .dev(relyingPartyId: "optimum-seagull-discrete.ngrok-free.app", jsBridgeUrl: nil), apiKey: "f156a875cf80454f6cee85ab09059422")
     @State private var email = ""
     @State private var path = [NavigationDestination]()
     
@@ -24,7 +24,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ZStack {
-                CapsuleWebView(viewModel: capsule).ignoresSafeArea()
+                CapsuleWebView(viewModel: capsule).hidden()
                 VStack {
                     TextField("User Name (email address)", text: $email)
                         .textInputAutocapitalization(.never)

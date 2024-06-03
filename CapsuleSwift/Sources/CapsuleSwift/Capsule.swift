@@ -12,6 +12,7 @@ import AuthenticationServices
 import os
 
 @available(iOS 16.4, *)
+@MainActor
 public struct CapsuleWebView: UIViewRepresentable {
     
     public var viewModel: Capsule
@@ -32,53 +33,8 @@ public struct CapsuleWebView: UIViewRepresentable {
     }
 }
 
-public enum CapsuleEnvironment {
-    case dev(relyingPartyId: String, jsBridgeUrl: URL?)
-    case sandbox(jsBridgeUrl: URL?)
-    case beta(jsBridgeUrl: URL?)
-    case prod(jsBridgeUrl: URL?)
-    
-    var relyingPartyId: String {
-        switch self {
-        case .dev(let relyingPartyId, _):
-            return relyingPartyId
-        case .sandbox(_):
-            return ""
-        case .beta(_):
-            return ""
-        case .prod(_):
-            return ""
-        }
-    }
-    
-    var jsBridgeUrl: URL {
-        switch self {
-        case .dev(_, let jsBridgeUrl):
-            return jsBridgeUrl ?? URL(string: "http://localhost:3004")!
-        case .sandbox(let jsBridgeUrl):
-            return jsBridgeUrl ?? URL(string: "https://js-bridge.sandbox.usecapsule.com/")!
-        case .beta(let jsBridgeUrl):
-            return jsBridgeUrl ?? URL(string: "https://js-bridge.beta.usecapsule.com/")!
-        case .prod(let jsBridgeUrl):
-            return jsBridgeUrl ?? URL(string: "https://js-bridge.usecapsule.com/")!
-        }
-    }
-    
-    var name: String {
-        switch self {
-        case .dev(_ ,_):
-            return "DEV"
-        case .sandbox(_):
-            return "SANDBOX"
-        case .beta(_):
-            return "BETA"
-        case .prod(_):
-            return "PROD"
-        }
-    }
-}
-
 @available(iOS 16.4, *)
+@MainActor
 public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScriptMessageHandler {
     private var continuation: CheckedContinuation<Any?, Error>?
     private let passkeysManager = PasskeysManager()
@@ -124,7 +80,6 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
     """)
     }
     
-    @MainActor
     private func postMessage(method: String, arguments: [Encodable]) async throws -> Any? {
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
@@ -137,7 +92,10 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
         """)
         }
     }
-    
+}
+
+@available(iOS 16.4, *)
+extension Capsule {
     public func checkIfUserExists(email: String) async throws -> Bool {
         let result = try await postMessage(method: "checkIfUserExists", arguments: [email])
         return result as! Bool
@@ -188,12 +146,6 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
         try await postMessage(method: "generatePasskey", arguments: [attestationObjectEncoded, clientDataJSONEncoded, credentialIDEncoded, userHandleEncoded, biometricsId])
     }
     
-    public func createWallet(skipDistributable: Bool) async throws {
-        let result = try await postMessage(method: "createWallet", arguments: [skipDistributable])
-        let walletAndRecovery = (result as! [[String: Any]])[0]
-        self.wallet = Wallet(result: (walletAndRecovery["wallet"] as! [String: String]))
-    }
-    
     public func setup2FA() async throws -> String {
         let result = try await postMessage(method: "setup2FA", arguments: [])
         return (result as! [String: String])["uri"]!
@@ -222,6 +174,20 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
         return result as? Bool ?? false
     }
     
+    public func logout() async throws {
+        try await postMessage(method: "logout", arguments: [])
+        wallet = nil
+    }
+}
+
+@available(iOS 16.4, *)
+extension Capsule {
+    public func createWallet(skipDistributable: Bool) async throws {
+        let result = try await postMessage(method: "createWallet", arguments: [skipDistributable])
+        let walletAndRecovery = (result as! [[String: Any]])[0]
+        self.wallet = Wallet(result: (walletAndRecovery["wallet"] as! [String: String]))
+    }
+    
     public func signMessage(walletId: String, message: String) async throws -> String {
         let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
         return (result as! [String: String])["signature"]!
@@ -237,11 +203,6 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
         let result = try await postMessage(method: "sendTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
         
         return (result as! [String: String])["signature"]!
-    }
-    
-    public func logout() async throws {
-        try await postMessage(method: "logout", arguments: [])
-        wallet = nil
     }
 }
 
