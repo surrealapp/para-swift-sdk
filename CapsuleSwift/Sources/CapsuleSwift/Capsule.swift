@@ -155,9 +155,9 @@ extension Capsule {
         let result = try await postMessage(method: "enable2FA", arguments: [])
     }
 
-    public func check2FAStatus() async throws -> String {
-        let result = try await postMessage(method: "resendVerificationCode", arguments: [])
-        return (result as! [String: String])["isSetup"]!
+    public func is2FASetup() async throws -> Bool {
+        let result = try await postMessage(method: "check2FAStatus", arguments: [])
+        return (result as! [String: Any])["isSetup"]! as! Bool
     }
     
     public func resendVerificationCode() async throws {
@@ -203,20 +203,6 @@ extension Capsule {
         let result = try await postMessage(method: "sendTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
         
         return (result as! [String: String])["signature"]!
-    }
-}
-
-public struct Wallet {
-    public let id: String
-    public let signer: String?
-    public let address: String?
-    public let publicKey: String?
-    
-    init(result: [String: Any]) {
-        id = result["id"]! as! String
-        signer = result["signer"] as? String
-        address = result["address"] as? String
-        publicKey = result["publicKey"] as? String
     }
 }
 

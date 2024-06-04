@@ -8,17 +8,21 @@
 
 /* Begin PBXBuildFile section */
 		E86B3BE62BD2EF9D00425F50 /* swift_exampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86B3BE52BD2EF9D00425F50 /* swift_exampleApp.swift */; };
-		E86B3BE82BD2EF9D00425F50 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86B3BE72BD2EF9D00425F50 /* ContentView.swift */; };
+		E86B3BE82BD2EF9D00425F50 /* UserAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86B3BE72BD2EF9D00425F50 /* UserAuthView.swift */; };
 		E8C134DE2C08128B0056BBBB /* CapsuleSwift in Frameworks */ = {isa = PBXBuildFile; productRef = E8C134DD2C08128B0056BBBB /* CapsuleSwift */; };
+		E8C134E02C0F77800056BBBB /* VerifyEmailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C134DF2C0F77800056BBBB /* VerifyEmailView.swift */; };
+		E8C134E22C0F780F0056BBBB /* WalletView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C134E12C0F780F0056BBBB /* WalletView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		E86435B32BE17AA300A552C6 /* swift-example.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "swift-example.entitlements"; sourceTree = "<group>"; };
 		E86B3BE22BD2EF9D00425F50 /* swift-example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "swift-example.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E86B3BE52BD2EF9D00425F50 /* swift_exampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = swift_exampleApp.swift; sourceTree = "<group>"; };
-		E86B3BE72BD2EF9D00425F50 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		E86B3BE72BD2EF9D00425F50 /* UserAuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserAuthView.swift; sourceTree = "<group>"; };
 		E86B3BE92BD2EF9E00425F50 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E86B3BEC2BD2EF9E00425F50 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		E8C134DF2C0F77800056BBBB /* VerifyEmailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerifyEmailView.swift; sourceTree = "<group>"; };
+		E8C134E12C0F780F0056BBBB /* WalletView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,7 +66,9 @@
 			children = (
 				E86435B32BE17AA300A552C6 /* swift-example.entitlements */,
 				E86B3BE52BD2EF9D00425F50 /* swift_exampleApp.swift */,
-				E86B3BE72BD2EF9D00425F50 /* ContentView.swift */,
+				E86B3BE72BD2EF9D00425F50 /* UserAuthView.swift */,
+				E8C134DF2C0F77800056BBBB /* VerifyEmailView.swift */,
+				E8C134E12C0F780F0056BBBB /* WalletView.swift */,
 				E86B3BE92BD2EF9E00425F50 /* Assets.xcassets */,
 				E86B3BEB2BD2EF9E00425F50 /* Preview Content */,
 			);
@@ -150,8 +156,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E86B3BE82BD2EF9D00425F50 /* ContentView.swift in Sources */,
+				E8C134E02C0F77800056BBBB /* VerifyEmailView.swift in Sources */,
+				E86B3BE82BD2EF9D00425F50 /* UserAuthView.swift in Sources */,
 				E86B3BE62BD2EF9D00425F50 /* swift_exampleApp.swift in Sources */,
+				E8C134E22C0F780F0056BBBB /* WalletView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
