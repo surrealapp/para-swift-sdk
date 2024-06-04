@@ -35,7 +35,10 @@ extension AuthorizationHandlingError: LocalizedError {
 }
 
 @available(iOS 16.4, *)
-public final class PasskeysManager: NSObject, ASAuthorizationControllerDelegate {
+final class PasskeysManager: NSObject, ASAuthorizationControllerDelegate {
+    
+    public var relyingPartyIdentifier = "optimum-seagull-discrete.ngrok-free.app"
+    
     public weak var presentationContextProvider: ASAuthorizationControllerPresentationContextProviding?
     
     public func signIntoPasskeyAccount(authorizationController: AuthorizationController,
@@ -68,20 +71,18 @@ public final class PasskeysManager: NSObject, ASAuthorizationControllerDelegate 
             throw AuthorizationHandlingError.unknownAuthorizationResult(authorizationResult)
         }
     }
-
-    private static let relyingPartyIdentifier = "optimum-seagull-discrete.ngrok-free.app"
     
     private func passkeyChallenge() async -> Data {
         Data("passkey challenge".utf8)
     }
 
     private func passkeyAssertionRequest(challenge: String) async -> ASAuthorizationRequest {
-        await ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: Self.relyingPartyIdentifier)
+        ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: relyingPartyIdentifier)
             .createCredentialAssertionRequest(challenge: Data(base64URLEncoded: challenge)!)
     }
 
     private func passkeyRegistrationRequest(username: String, userHandle: Data) async -> ASAuthorizationRequest {
-        await ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: Self.relyingPartyIdentifier)
+        await ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: relyingPartyIdentifier)
            .createCredentialRegistrationRequest(challenge: passkeyChallenge(), name: username, userID: userHandle)
     }
 
@@ -94,7 +95,7 @@ public final class PasskeysManager: NSObject, ASAuthorizationControllerDelegate 
         case let .passkeyAssertion(passkeyAssertion):
             // The login was successful.
             Logger.authorization.log("Passkey authorization succeeded: \(passkeyAssertion)")
-            guard let username = String(bytes: passkeyAssertion.userID, encoding: .utf8) else {
+            guard let _ = String(bytes: passkeyAssertion.userID, encoding: .utf8) else {
                 fatalError("Invalid credential: \(passkeyAssertion)")
             }
         case let .passkeyRegistration(passkeyRegistration):

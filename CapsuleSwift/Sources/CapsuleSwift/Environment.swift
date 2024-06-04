@@ -7,22 +7,35 @@
 
 import Foundation
 
-public enum CapsuleEnvironment {
+public enum CapsuleEnvironment: Hashable {
     case dev(relyingPartyId: String, jsBridgeUrl: URL?)
     case sandbox(jsBridgeUrl: URL?)
     case beta(jsBridgeUrl: URL?)
     case prod(jsBridgeUrl: URL?)
     
+    public var defaultApiKey: String {
+        switch self {
+        case .dev(_ ,_):
+            return "f156a875cf80454f6cee85ab09059422"
+        case .sandbox(_):
+            return "8ee2d015fbc6062a6e30bdc472f2946c"
+        case .beta(_):
+            return "d0b61c2c8865aaa2fb12886651627271"
+        case .prod(_):
+            return "ea0dbf5ed0ebbc6f1256b753672a6a18"
+        }
+    }
+
     var relyingPartyId: String {
         switch self {
         case .dev(let relyingPartyId, _):
             return relyingPartyId
         case .sandbox(_):
-            return ""
+            return "app.sandbox.usecapsule.com"
         case .beta(_):
-            return ""
+            return "app.beta.usecapsule.com"
         case .prod(_):
-            return ""
+            return "app.usecapsule.com"
         }
     }
     

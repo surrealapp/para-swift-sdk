@@ -26,10 +26,10 @@ struct VerifyEmailView: View {
             .border(.secondary)
         Button("Verify") {
             Task.init {
-                let biometricsId = await try! capsule.verify(verificationCode: code)
-                await try! capsule.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
+                let biometricsId = try! await capsule.verify(verificationCode: code)
+                try! await capsule.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
                 path.append(.wallet)
-                await try! capsule.createWallet(skipDistributable: false)
+                try! await capsule.createWallet(skipDistributable: false)
             }
         }
     }

@@ -40,8 +40,14 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
     private let passkeysManager = PasskeysManager()
 
     @Published public var wallet: Wallet?
-    private let environment: CapsuleEnvironment
-    private let apiKey: String
+    public var environment: CapsuleEnvironment {
+        didSet {
+            self.apiKey = environment.defaultApiKey
+            self.passkeysManager.relyingPartyIdentifier = environment.relyingPartyId
+            self.loadJsBridge()
+        }
+    }
+    public var apiKey: String
     
     weak var webView: WKWebView? {
         didSet {
@@ -123,8 +129,8 @@ extension Capsule {
         self.wallet = Wallet(result: (wallet as! [String: Any]))
     }
     
-    public func verify(verificationCode: String) async -> String {
-        let result = try! await postMessage(method: "verifyEmail", arguments: [verificationCode])
+    public func verify(verificationCode: String) async throws -> String {
+        let result = try await postMessage(method: "verifyEmail", arguments: [verificationCode])
         let paths = (result as! String).split(separator: "/")
         let biometricsId = paths.last!.split(separator: "?").first!
         return String(biometricsId)

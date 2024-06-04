@@ -79,7 +79,7 @@ struct WalletView: View {
                 
                 Button("Logout") {
                     Task.init {
-                        await try! capsule.logout()
+                        try! await capsule.logout()
                         path = []
                     }
                 }.buttonStyle(.bordered)
@@ -92,9 +92,9 @@ struct WalletView: View {
 }
 
 #Preview {
-    WalletView(wallet: nil, path: .constant([])).environmentObject(CapsuleSwift.Capsule(environment: .beta(jsBridgeUrl: nil), apiKey: ""))
+    WalletView(wallet: nil, path: .constant([])).environmentObject(CapsuleSwift.Capsule(environment: defaultDevEnv, apiKey: ""))
 }
 
 #Preview {
-    WalletView(wallet: Wallet(id: "1", signer: nil, address: "0x1f328fejin3", publicKey: nil), path: .constant([])).environmentObject(CapsuleSwift.Capsule(environment: .beta(jsBridgeUrl: nil), apiKey: ""))
+    WalletView(wallet: Wallet(id: "1", signer: nil, address: "0x1f328fejin3", publicKey: nil), path: .constant([])).environmentObject(CapsuleSwift.Capsule(environment: defaultDevEnv, apiKey: ""))
 }
