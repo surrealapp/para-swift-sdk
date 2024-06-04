@@ -86,8 +86,12 @@ struct UserAuthView: View {
                         }
                         Button("Log In") {
                             Task.init {
-                                try? await capsule.login(authorizationController: authorizationController)
-                                path.append(.wallet)
+                                do {
+                                    try await capsule.login(authorizationController: authorizationController)
+                                    path.append(.wallet)
+                                } catch {
+                                    
+                                }
                             }
                         }
                     }

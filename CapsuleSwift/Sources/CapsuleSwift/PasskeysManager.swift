@@ -37,9 +37,13 @@ extension AuthorizationHandlingError: LocalizedError {
 @available(iOS 16.4, *)
 final class PasskeysManager: NSObject, ASAuthorizationControllerDelegate {
     
-    public var relyingPartyIdentifier = "optimum-seagull-discrete.ngrok-free.app"
+    public var relyingPartyIdentifier: String
     
     public weak var presentationContextProvider: ASAuthorizationControllerPresentationContextProviding?
+    
+    public init(relyingPartyIdentifier: String) {
+        self.relyingPartyIdentifier = relyingPartyIdentifier
+    }
     
     public func signIntoPasskeyAccount(authorizationController: AuthorizationController,
                                        challenge: String,

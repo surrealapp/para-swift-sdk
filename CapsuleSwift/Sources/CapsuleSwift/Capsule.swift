@@ -37,7 +37,7 @@ public struct CapsuleWebView: UIViewRepresentable {
 @MainActor
 public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScriptMessageHandler {
     private var continuation: CheckedContinuation<Any?, Error>?
-    private let passkeysManager = PasskeysManager()
+    private let passkeysManager: PasskeysManager
 
     @Published public var wallet: Wallet?
     public var environment: CapsuleEnvironment {
@@ -58,6 +58,7 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
     public init(environment: CapsuleEnvironment, apiKey: String) {
         self.environment = environment
         self.apiKey = apiKey
+        self.passkeysManager = PasskeysManager(relyingPartyIdentifier: environment.relyingPartyId)
     }
     
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
