@@ -2,9 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:CapsuleSwift">
+      location = "group:swift-example/swift-example.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:swift-example/swift-example.xcodeproj">
+      location = "group:CapsuleSwift">
    </FileRef>
 </Workspace>

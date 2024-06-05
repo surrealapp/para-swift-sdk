@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import UIKit
 import WebKit
 import AuthenticationServices
 import os
@@ -47,6 +46,7 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
             self.loadJsBridge()
         }
     }
+    
     public var apiKey: String
     
     weak var webView: WKWebView? {
@@ -126,7 +126,7 @@ extension Capsule {
         let verifyWebChallengeResult = try await postMessage(method: "verifyWebChallenge", arguments: [id, authenticatorData, clientDataJSON, signature])
         let userId = verifyWebChallengeResult as! String
         
-        let wallet = try await postMessage(method: "login", arguments: [userId, id, signIntoPasskeyAccountResult.userID.base64URLEncodedString()])
+        let wallet = try await postMessage(method: "loginV2", arguments: [userId, id, signIntoPasskeyAccountResult.userID.base64URLEncodedString()])
         self.wallet = Wallet(result: (wallet as! [String: Any]))
     }
     
@@ -150,7 +150,7 @@ extension Capsule {
         let clientDataJSONEncoded = result.rawClientDataJSON.base64URLEncodedString()
         let credentialIDEncoded = result.credentialID.base64URLEncodedString()
         
-        try await postMessage(method: "generatePasskey", arguments: [attestationObjectEncoded, clientDataJSONEncoded, credentialIDEncoded, userHandleEncoded, biometricsId])
+        try await postMessage(method: "generatePasskeyV2", arguments: [attestationObjectEncoded, clientDataJSONEncoded, credentialIDEncoded, userHandleEncoded, biometricsId])
     }
     
     public func setup2FA() async throws -> String {

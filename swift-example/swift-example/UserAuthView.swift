@@ -18,7 +18,7 @@ let defaultBetaEnv = CapsuleEnvironment.beta(jsBridgeUrl: nil)
 let defaultProdEnv = CapsuleEnvironment.prod(jsBridgeUrl: nil)
 
 struct UserAuthView: View {
-    @StateObject var capsule = CapsuleSwift.Capsule(environment: defaultSandboxEnv, apiKey: "8ee2d015fbc6062a6e30bdc472f2946c")
+    @StateObject var capsule = CapsuleSwift.Capsule(environment: defaultSandboxEnv, apiKey: defaultSandboxEnv.defaultApiKey)
     @State private var email = ""
     @State private var path = [NavigationDestination]()
     
