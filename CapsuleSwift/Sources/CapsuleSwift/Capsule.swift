@@ -181,6 +181,11 @@ extension Capsule {
         return result as? Bool ?? false
     }
     
+    public func exportSession() async throws {
+        let result = try await postMessage(method: "exportSession", arguments: [])
+        print(result)
+    }
+    
     public func logout() async throws {
         try await postMessage(method: "logout", arguments: [])
         wallet = nil
@@ -195,6 +200,20 @@ extension Capsule {
         self.wallet = Wallet(result: (walletAndRecovery["wallet"] as! [String: String]))
     }
     
+    public func fetchWallets() async throws -> [Wallet] {
+        let result = try await postMessage(method: "fetchWallets", arguments: [])
+        let wallets = (result as! [[String: Any]]).map { Wallet(result: $0)}
+        return wallets
+    }
+    
+    public func distributeNewWalletShare(walletId: String, userShare: String) async throws {
+        let result = try await postMessage(method: "distributeNewWalletShare", arguments: [walletId, userShare])
+        print(result)
+    }
+}
+
+@available(iOS 16.4, *)
+extension Capsule {
     public func signMessage(walletId: String, message: String) async throws -> String {
         let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
         return (result as! [String: String])["signature"]!

@@ -70,6 +70,14 @@ struct WalletView: View {
                             }
                         }
                     }.buttonStyle(.bordered)
+                    HStack {
+                        Button("Fetch Wallets") {
+                            Task.init {
+                                let wallets = try! await capsule.fetchWallets()
+                                result = "Wallet addresses: \(wallets.map { $0.address })"
+                            }
+                        }
+                    }.buttonStyle(.bordered)
                 }
                 
                 Text("\(result)")
