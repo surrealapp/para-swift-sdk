@@ -20,18 +20,21 @@ struct VerifyEmailView: View {
     @Environment(\.authorizationController) private var authorizationController
         
     var body: some View {
-        TextField("Code", text: $code)
-            .textInputAutocapitalization(.never)
-            .disableAutocorrection(true)
-            .border(.secondary)
-        Button("Verify") {
-            Task.init {
-                let biometricsId = try! await capsule.verify(verificationCode: code)
-                try! await capsule.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
-                path.append(.wallet)
-                try! await capsule.createWallet(skipDistributable: false)
+        VStack {
+            TextField("Code", text: $code)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+            Button("Verify") {
+                Task.init {
+                    let biometricsId = try! await capsule.verify(verificationCode: code)
+                    try! await capsule.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
+                    path.append(.wallet)
+                    try! await capsule.createWallet(skipDistributable: false)
+                }
             }
-        }
+            .buttonStyle(.bordered)
+        }.padding()
     }
 }
 

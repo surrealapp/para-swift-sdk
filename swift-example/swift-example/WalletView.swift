@@ -20,13 +20,13 @@ struct WalletView: View {
     
     var body: some View {
         VStack {
-            Spacer()
             if let wallet = wallet {
+                Spacer()
                 Text("Wallet Address: \(wallet.address!)")
                 
                 TextField("Message to sign", text: $messageToSign)
                     .autocorrectionDisabled()
-                    .border(.secondary)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
                 
                 Button("Sign Message") {
                     Task.init {
@@ -72,7 +72,6 @@ struct WalletView: View {
                     }.buttonStyle(.bordered)
                 }
                 
-                Text("Result").font(.title).bold()
                 Text("\(result)")
                 
                 Spacer()
@@ -84,6 +83,7 @@ struct WalletView: View {
                     }
                 }.buttonStyle(.bordered)
             } else {
+                ProgressView()
                 Text("Creating wallet...")
             }
         }

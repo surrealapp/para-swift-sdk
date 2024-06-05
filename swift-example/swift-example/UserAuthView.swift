@@ -67,10 +67,11 @@ struct UserAuthView: View {
                     
                     Spacer()
                     
-                    TextField("User Name (email address)", text: $email)
+                    TextField("Email Address", text: $email)
                         .textInputAutocapitalization(.never)
                         .disableAutocorrection(true)
-                        .border(.secondary)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .keyboardType(.emailAddress)
                     HStack {
                         Button("Sign Up") {
                             Task.init {
