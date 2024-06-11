@@ -10,21 +10,41 @@ import WebKit
 import AuthenticationServices
 import os
 
+/// A UIViewRepresentable that allows access to functions of the [JavaScript Bridge](https://github.com/capsule-org/web-sdk/blob/main/sites/bridge/src/index.ts)
+///
+/// > Important: This must be added to your view to enable the Capsule instance to access the
+/// > [JavaScript Bridge](https://github.com/capsule-org/web-sdk/blob/main/sites/bridge/src/index.ts),
+/// > and should be hidden
+///
+/// ```swift
+/// ZStack {
+///     CapsuleWebView(viewModel: capsule).hidden()
+///     ...
+/// ```
 @available(iOS 16.4, *)
 @MainActor
 public struct CapsuleWebView: UIViewRepresentable {
     
-    public var viewModel: Capsule
-    
-    public init(viewModel: Capsule) {
-        self.viewModel = viewModel
+    /// An instance of the Capsule class
+    public var capsule: Capsule
+
+    /**
+     Initializes a new CapsuleWebView with the provided Capsule instance
+
+     - Parameters:
+        - capsule: An instance of the Capsule class
+
+     - Returns: A new instance of the CapsuleWebView struct
+     */
+    public init(capsule: Capsule) {
+        self.capsule = capsule
     }
     
     public func makeUIView(context: Context) -> WKWebView {
         let webView = WKWebView(frame: CGRect.zero)
-        webView.configuration.userContentController.add(viewModel, name: "callback")
-        viewModel.webView = webView
-        viewModel.loadJsBridge()
+        webView.configuration.userContentController.add(capsule, name: "callback")
+        capsule.webView = webView
+        capsule.loadJsBridge()
         return webView
     }
     
