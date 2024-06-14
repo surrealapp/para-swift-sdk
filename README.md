@@ -14,7 +14,13 @@
   ### Request an API Key & Send us Your App ID
 Your full application id will be your team id followed by the apps bundle identifier **<TEAM_ID>.app.bundle.identifier**. Your team id can be found from [Apple's developer portal](https://developer.apple.com/account/resources/certificates/list) in the top right corner of the Certificates, Identifiers & Profiles section.
 
-**To request an API Key and send us your app id, please fill out [this form](https://usecapsule.com/api)**
+<img width="1262" alt="Team ID" src="https://github.com/capsule-org/swift-sdk/assets/4346395/8804c237-5805-49e8-b7ef-845833646261">
+
+Your bundle identifier can be found here
+
+<img width="1547" alt="Bundle Identifier" src="https://github.com/capsule-org/swift-sdk/assets/4346395/84827d38-8477-422a-8e66-6c3ac6819095">
+
+**To request an API Key and send us your team and bundle ids, please fill out [this form](https://usecapsule.com/api)**
 
 ## Installation
 
@@ -68,7 +74,14 @@ CapsuleSwift utilizes native passkeys for authentication and wallet information.
 
 
 
-Under **Targets**->**AppName**->**Signing & Capabilities**, click on the **+Capability** button. From the prompt that appears, search for and select **Associated Domains**
+Under **Targets**->**AppName**->**Signing & Capabilities**, click on the **+Capability** button.
+
+<img width="1483" alt="Capability" src="https://github.com/capsule-org/swift-sdk/assets/4346395/296ade64-552a-4833-9d24-4059335e82d2">
+
+From the prompt that appears, search for and select **Associated Domains**
+
+<img width="702" alt="Associated Domains" src="https://github.com/capsule-org/swift-sdk/assets/4346395/6570acd4-75a6-43d2-92cc-2da713a51246">
+
 
 > **Note:** In order to add the associated domains capability to your project, you cannot use a personal team for the purposes of signing. If you are, you need to set up a company team with Apple.
 
@@ -76,6 +89,10 @@ In the associated domains section that appears after adding it, you will need to
 
 1. webcredentials:app.beta.usecapsule.com
 2. webcredentials:app.usecapsule.com
+
+<img width="874" alt="Add Associated Domains" src="https://github.com/capsule-org/swift-sdk/assets/4346395/84c010e3-1377-4be4-ba74-6644781d78a4">
+<img width="370" alt="AD Filled Out" src="https://github.com/capsule-org/swift-sdk/assets/4346395/3fb7a653-b90d-47b3-ae05-dd75905d3458">
+
 
 This will allow you to use passkeys that have been created on any app that uses the Capsule system, so if your users already have a Capsule wallet they will be able to use it in your app.  
 
