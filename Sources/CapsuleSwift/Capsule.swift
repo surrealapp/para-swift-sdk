@@ -61,9 +61,7 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
     @Published public var wallet: Wallet?
     public var environment: CapsuleEnvironment {
         didSet {
-            self.apiKey = environment.defaultApiKey
             self.passkeysManager.relyingPartyIdentifier = environment.relyingPartyId
-            self.loadJsBridge()
         }
     }
     
@@ -94,7 +92,7 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
         initCapsule()
     }
     
-    private func initCapsule() {
+    public func initCapsule() {
         webView!.evaluateJavaScript("""
       window.postMessage({
         messageType: 'Capsule#init',
