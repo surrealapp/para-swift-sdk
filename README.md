@@ -10,9 +10,9 @@
 [![Swift Package Manager](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)
 
   
-  ## Prerequisites
-  ### Request an API Key & Send us Your App ID
-Your full application id will be your team id followed by the apps bundle identifier **<TEAM_ID>.app.bundle.identifier**. Your team id can be found from [Apple's developer portal](https://developer.apple.com/account/resources/certificates/list) in the top right corner of the Certificates, Identifiers & Profiles section.
+## Prerequisites
+### Request an API Key & Send us Your Team ID & Bundle ID
+Your team id can be found from [Apple's developer portal](https://developer.apple.com/account/resources/certificates/list) in the top right corner of the Certificates, Identifiers & Profiles section.
 
 <img width="1262" alt="Team ID" src="https://github.com/capsule-org/swift-sdk/assets/4346395/8804c237-5805-49e8-b7ef-845833646261">
 
