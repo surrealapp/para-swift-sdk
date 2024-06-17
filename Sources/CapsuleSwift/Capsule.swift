@@ -55,6 +55,13 @@ public struct CapsuleWebView: UIViewRepresentable {
 @available(iOS 16.4, *)
 @MainActor
 public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScriptMessageHandler {
+    public static let packageVersion = "0.0.1"
+        
+    enum CapsuleError: Error {
+        case missingResponseData
+        case bridgeError(String)
+    }
+    
     private var continuation: CheckedContinuation<Any?, Error>?
     private let passkeysManager: PasskeysManager
 
@@ -81,6 +88,12 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
     
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         let resp = message.body as! [String: Any]
+        
+        if let error = resp["error"] {
+            continuation?.resume(throwing: CapsuleError.bridgeError(error as? String ?? "No further information provided"))
+            return
+        }
+        
         continuation?.resume(returning: resp["responseData"])
     }
     
@@ -99,7 +112,8 @@ public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScript
         arguments: {
           environment: '\(environment.name)',
           apiKey: '\(apiKey)',
-          platform: 'ios',
+          platform: 'iOS',
+          package: '\(Self.packageVersion)'
         }
       });
     """)
