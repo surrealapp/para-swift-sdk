@@ -55,7 +55,7 @@ public struct CapsuleWebView: UIViewRepresentable {
 @available(iOS 16.4, *)
 @MainActor
 public class Capsule: NSObject, ObservableObject, WKNavigationDelegate, WKScriptMessageHandler {
-    public static let packageVersion = "0.0.1"
+    public static let packageVersion = "0.0.2"
         
     enum CapsuleError: Error {
         case missingResponseData
