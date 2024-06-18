@@ -4,9 +4,7 @@
   
 
 [![Swift](https://img.shields.io/badge/Swift-5.7+-orange?style=flat-square)](https://img.shields.io/badge/Swift-5.7+-Orange?style=flat-square)
-
 [![iOS](https://img.shields.io/badge/iOS-16.4+-yellowgreen?style=flat-square)](https://img.shields.io/badge/iOS-16.4+-Green?style=flat-square)
-
 [![Swift Package Manager](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)](https://img.shields.io/badge/Swift_Package_Manager-compatible-orange?style=flat-square)
 
   
