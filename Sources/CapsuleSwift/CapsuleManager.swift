@@ -159,6 +159,7 @@ extension CapsuleManager {
         let walletDict = try decodeResult(wallet, expectedType: [String: Any].self)
         
         self.wallet = Wallet(result: walletDict)
+        sessionState = .activeLoggedIn
     }
     
     public func verify(verificationCode: String) async throws -> String {
