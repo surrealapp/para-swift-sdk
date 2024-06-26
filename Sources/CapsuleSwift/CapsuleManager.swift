@@ -10,6 +10,25 @@ import WebKit
 import AuthenticationServices
 import os
 
+enum CapsuleError: Error {
+    case bridgeError(String)
+    case bridgeInUseError
+    case bridgeTimeoutError
+}
+
+extension CapsuleError: CustomStringConvertible {
+    var description: String {
+        switch self {
+        case .bridgeError(let info):
+            return "The following error happened while the javascript bridge was executing: \(info)"
+        case .bridgeInUseError:
+            return "The javascript bridge is currently processing a request. Only one request may be triggered at a time."
+        case .bridgeTimeoutError:
+            return "The javascript bridge did not respond in time and the continuation has been cancelled."
+        }
+    }
+}
+
 @available(iOS 16.4, *)
 public class CapsuleManager: NSObject, ObservableObject {
     // MARK: - Public
@@ -32,11 +51,6 @@ public class CapsuleManager: NSObject, ObservableObject {
     private var continuation: CheckedContinuation<Any?, Error>?
     
     // MARK: - Internal
-    enum CapsuleError: Error {
-        case missingResponseData
-        case bridgeError(String)
-    }
-    
     public init(environment: CapsuleEnvironment, apiKey: String) {
         self.environment = environment
         self.apiKey = apiKey
@@ -67,6 +81,10 @@ public class CapsuleManager: NSObject, ObservableObject {
     @MainActor
     @discardableResult
     private func postMessage(method: String, arguments: [Encodable]) async throws -> Any? {
+        if let _ = continuation {
+            throw CapsuleError.bridgeInUseError
+        }
+        
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
             let script = """
@@ -111,18 +129,22 @@ extension CapsuleManager: WKScriptMessageHandler {
         guard let resp = message.body as? [String: Any],
               let method = resp["method"] else {
             continuation?.resume(throwing: CapsuleError.bridgeError("Invalid response format"))
+            continuation = nil
             return
         }
         
         if let error = resp["error"] as? String {
             continuation?.resume(throwing: CapsuleError.bridgeError("\(method): \(error)"))
+            continuation = nil
             return
         } else if resp["error"] != nil {
             continuation?.resume(throwing: CapsuleError.bridgeError("\(method): Error occurred, but details are not available"))
+            continuation = nil
             return
         }
         
         continuation?.resume(returning: resp["responseData"])
+        continuation = nil
     }
 }
 
