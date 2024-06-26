@@ -18,7 +18,8 @@ let defaultBetaEnv = CapsuleEnvironment.beta(jsBridgeUrl: nil)
 let defaultProdEnv = CapsuleEnvironment.prod(jsBridgeUrl: nil)
 
 struct UserAuthView: View {
-    @StateObject var capsule = CapsuleSwift.Capsule(environment: defaultDevEnv, apiKey: "4f1d69a07c0fdc0bd16472a0780b770c")
+    @EnvironmentObject var capsuleManager: CapsuleManager
+
     @State private var email = ""
     @State private var path = [NavigationDestination]()
     
@@ -33,7 +34,7 @@ struct UserAuthView: View {
     var body: some View {
         NavigationStack(path: $path) {
             ZStack {
-                CapsuleWebView(capsule: capsule).hidden()
+                CapsuleWebView(capsuleManager: capsuleManager).hidden()
                 VStack {
                     HStack {
                         Text("Environment")
@@ -44,7 +45,7 @@ struct UserAuthView: View {
                                 Text("Beta").tag(defaultBetaEnv)
                                 Text("Prod").tag(defaultProdEnv)
                             }.onChange(of: selectedEnvironment) { oldValue, newValue in
-                                capsule.environment = selectedEnvironment
+                                capsuleManager.environment = selectedEnvironment
                             }
                         } else {
                             // Fallback on earlier versions
@@ -58,7 +59,7 @@ struct UserAuthView: View {
                     .alert("", isPresented: $showingSetApiKeyAlert) {
                         TextField("API Key", text: $newApiKey)
                         Button("Set API Key") {
-                            capsule.apiKey = newApiKey
+                            capsuleManager.apiKey = newApiKey
                         }
                         Button("Cancel", role: .cancel) {
                             showingSetApiKeyAlert.toggle()
@@ -75,19 +76,19 @@ struct UserAuthView: View {
                     HStack {
                         Button("Sign Up") {
                             Task.init {
-                                let userExists = try! await capsule.checkIfUserExists(email: email)
+                                let userExists = try await capsuleManager.checkIfUserExists(email: email)
                                 
                                 if userExists {
                                     return
                                 }
                                 
-                                try! await capsule.createUser(email: email)
+                                try await capsuleManager.createUser(email: email)
                                 path.append(.verifyEmail)
                             }
                         }
                         Button("Log In") {
                             Task.init {
-                                try! await capsule.login(authorizationController: authorizationController)
+                                try await capsuleManager.login(authorizationController: authorizationController)
                                 path.append(.wallet)
                             }
                         }
@@ -99,9 +100,9 @@ struct UserAuthView: View {
                 .navigationDestination(for: NavigationDestination.self) { path in
                     switch path {
                     case .verifyEmail:
-                        VerifyEmailView(email: email, path: $path).environmentObject(capsule)
+                        VerifyEmailView(email: email, path: $path)
                     case .wallet:
-                        WalletView(wallet: capsule.wallet, path: $path).environmentObject(capsule)
+                        WalletView(wallet: capsuleManager.wallet, path: $path)
                     }
                 }
             }
