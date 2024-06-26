@@ -10,7 +10,7 @@ import CapsuleSwift
 
 struct VerifyEmailView: View {
     
-    @EnvironmentObject var capsule: CapsuleSwift.Capsule
+    @EnvironmentObject var capsule: CapsuleManager
     
     let email: String
     

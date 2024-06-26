@@ -25,8 +25,8 @@ public class CapsuleManager: NSObject, ObservableObject {
     public var apiKey: String
     
     public var webView: WKWebView = WKWebView(frame: CGRect.zero)
-
-
+    
+    
     // MARK: - Private
     private let passkeysManager: PasskeysManager
     private var continuation: CheckedContinuation<Any?, Error>?
@@ -60,7 +60,7 @@ public class CapsuleManager: NSObject, ObservableObject {
             }
           });
         """
-        
+            
         webView.evaluateJavaScript(script)
     }
     
@@ -76,7 +76,7 @@ public class CapsuleManager: NSObject, ObservableObject {
                 'arguments': \(arguments)
               });
             """
-
+            
             webView.evaluateJavaScript(script)
         }
     }
@@ -87,18 +87,17 @@ public class CapsuleManager: NSObject, ObservableObject {
 @available(iOS 16.4, *)
 extension CapsuleManager: WKNavigationDelegate {
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        initCapsule()
         Task { @MainActor in
-            guard let active = try? await isSessionActive(), 
-                    active else {
+            initCapsule()
+            guard let active = try? await isSessionActive(), active else {
                 sessionState = .inactive
                 return
             }
-            guard let loggedIn = try? await isFullyLoggedIn(), 
-                    loggedIn else {
+            guard let loggedIn = try? await isFullyLoggedIn(), loggedIn else {
                 sessionState = .active
                 return
             }
+            wallet = try await fetchWallets().first
             sessionState = .activeLoggedIn
         }
     }
@@ -110,11 +109,11 @@ extension CapsuleManager: WKNavigationDelegate {
 extension CapsuleManager: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let resp = message.body as? [String: Any],
-            let method = resp["method"] else {
+              let method = resp["method"] else {
             continuation?.resume(throwing: CapsuleError.bridgeError("Invalid response format"))
             return
         }
-
+        
         if let error = resp["error"] as? String {
             continuation?.resume(throwing: CapsuleError.bridgeError("\(method): \(error)"))
             return
@@ -122,7 +121,7 @@ extension CapsuleManager: WKScriptMessageHandler {
             continuation?.resume(throwing: CapsuleError.bridgeError("\(method): Error occurred, but details are not available"))
             return
         }
-
+        
         continuation?.resume(returning: resp["responseData"])
     }
 }
@@ -167,12 +166,12 @@ extension CapsuleManager {
         let resultString = try decodeResult(result, expectedType: String.self)
         
         let paths = resultString.split(separator: "/")
-
+        
         guard let lastPath = paths.last,
               let biometricsId = lastPath.split(separator: "?").first else {
             throw CapsuleError.bridgeError("Invalid path format in result")
         }
-
+        
         return String(biometricsId)
     }
     
@@ -207,16 +206,16 @@ extension CapsuleManager {
         let result = try await postMessage(method: "check2FAStatus", arguments: [])
         return try decodeDictionaryResult(result, key: "isSetup", expectedType: Bool.self)
     }
-
+    
     public func resendVerificationCode() async throws {
         _ = try await postMessage(method: "resendVerificationCode", arguments: [])
     }
-
+    
     public func isFullyLoggedIn() async throws -> Bool {
         let result = try await postMessage(method: "isFullyLoggedIn", arguments: [])
         return try decodeResult(result, expectedType: Bool.self)
     }
-
+    
     public func isSessionActive() async throws -> Bool {
         let result = try await postMessage(method: "isSessionActive", arguments: [])
         return try decodeResult(result, expectedType: Bool.self)
@@ -230,6 +229,7 @@ extension CapsuleManager {
     public func logout() async throws {
         try await postMessage(method: "logout", arguments: [])
         wallet = nil
+        sessionState = .active
     }
 }
 
@@ -248,7 +248,7 @@ extension CapsuleManager {
         self.wallet = Wallet(result: walletDict)
         self.sessionState = .activeLoggedIn
     }
-
+    
     public func fetchWallets() async throws -> [Wallet] {
         let result = try await postMessage(method: "fetchWallets", arguments: [])
         let walletsData = try decodeResult(result, expectedType: [[String: Any]].self)
@@ -268,12 +268,12 @@ extension CapsuleManager {
         let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
         return try decodeDictionaryResult(result, key: "signature", expectedType: String.self)
     }
-
+    
     public func signTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
         let result = try await postMessage(method: "signTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
         return try decodeDictionaryResult(result, key: "signature", expectedType: String.self)
     }
-
+    
     public func sendTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
         let result = try await postMessage(method: "sendTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
         return try decodeDictionaryResult(result, key: "signature", expectedType: String.self)
@@ -291,7 +291,7 @@ extension CapsuleManager {
         }
         return value
     }
-
+    
     func decodeDictionaryResult<T>(_ result: Any?, key: String, expectedType: T.Type) throws -> T {
         let dict = try decodeResult(result, expectedType: [String: Any].self)
         guard let value = dict[key] as? T else {

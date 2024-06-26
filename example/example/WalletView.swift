@@ -9,7 +9,7 @@ import SwiftUI
 import CapsuleSwift
 
 struct WalletView: View {
-    @EnvironmentObject var capsule: CapsuleSwift.Capsule 
+    @EnvironmentObject var capsule: CapsuleManager
     
     let wallet: Wallet?
     
@@ -30,7 +30,7 @@ struct WalletView: View {
                 
                 Button("Sign Message") {
                     Task.init {
-                        let messageSignature = try! await capsule.signMessage(walletId: wallet.id, message: messageToSign)
+                        let messageSignature = try await capsule.signMessage(walletId: wallet.id, message: messageToSign)
                         result = "messageSignature: \(messageSignature)"
                     }
                 }.buttonStyle(.bordered)
@@ -39,13 +39,13 @@ struct WalletView: View {
                     HStack {
                         Button("Fully Logged In?") {
                             Task.init {
-                                let isFullyLoggedIn = try! await capsule.isFullyLoggedIn()
+                                let isFullyLoggedIn = try await capsule.isFullyLoggedIn()
                                 result = "isFullyLoggedIn: \(isFullyLoggedIn)"
                             }
                         }
                         Button("Session Active?") {
                             Task.init {
-                                let isSessionActive = try! await capsule.isSessionActive()
+                                let isSessionActive = try await capsule.isSessionActive()
                                 result = "isSessionActive: \(isSessionActive)"
                             }
                         }
@@ -53,19 +53,19 @@ struct WalletView: View {
                     HStack {
                         Button("2FA Status") {
                             Task.init {
-                                let status = try! await capsule.is2FASetup()
+                                let status = try await capsule.is2FASetup()
                                 result = "2FA Status: \(status)"
                             }
                         }
                         Button("Setup 2FA") {
                             Task.init {
-                                let status = try! await capsule.setup2FA()
+                                let status = try await capsule.setup2FA()
                                 result = "Setup 2FA: \(status)"
                             }
                         }
                         Button("Enable 2FA") {
                             Task.init {
-                                try! await capsule.enable2FA()
+                                try await capsule.enable2FA()
                                 result = "Enabled 2FA"
                             }
                         }
@@ -73,7 +73,7 @@ struct WalletView: View {
                     HStack {
                         Button("Fetch Wallets") {
                             Task.init {
-                                let wallets = try! await capsule.fetchWallets()
+                                let wallets = try await capsule.fetchWallets()
                                 result = "Wallet addresses: \(wallets.map { $0.address })"
                             }
                         }
@@ -86,7 +86,7 @@ struct WalletView: View {
                 
                 Button("Logout") {
                     Task.init {
-                        try! await capsule.logout()
+                        try await capsule.logout()
                         path = []
                     }
                 }.buttonStyle(.bordered)
@@ -100,9 +100,9 @@ struct WalletView: View {
 }
 
 #Preview {
-    WalletView(wallet: nil, path: .constant([])).environmentObject(CapsuleSwift.Capsule(environment: defaultDevEnv, apiKey: ""))
+    WalletView(wallet: nil, path: .constant([])).environmentObject(CapsuleManager(environment: defaultDevEnv, apiKey: ""))
 }
 
 #Preview {
-    WalletView(wallet: Wallet(id: "1", signer: nil, address: "0x1f328fejin3", publicKey: nil), path: .constant([])).environmentObject(CapsuleSwift.Capsule(environment: defaultDevEnv, apiKey: ""))
+    WalletView(wallet: Wallet(id: "1", signer: nil, address: "0x1f328fejin3", publicKey: nil), path: .constant([])).environmentObject(CapsuleManager(environment: defaultDevEnv, apiKey: ""))
 }
