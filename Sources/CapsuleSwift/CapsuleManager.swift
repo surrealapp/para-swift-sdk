@@ -244,8 +244,9 @@ extension CapsuleManager {
         return try decodeResult(result, expectedType: Bool.self)
     }
     
-    public func exportSession() async throws {
-        try await postMessage(method: "exportSession", arguments: [])
+    public func exportSession() async throws -> String {
+        let result = try await postMessage(method: "exportSession", arguments: [])
+        return try decodeResult(result, expectedType: String.self)
     }
     
     @MainActor
