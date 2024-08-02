@@ -48,6 +48,7 @@ public class CapsuleManager: NSObject, ObservableObject {
     
     // MARK: - Private
     private let passkeysManager: PasskeysManager
+    public private(set) var isCapsuleInitialized: Bool = false
     private var continuation: CheckedContinuation<Any?, Error>?
     
     // MARK: - Internal
@@ -76,11 +77,13 @@ public class CapsuleManager: NSObject, ObservableObject {
         """
             
         webView.evaluateJavaScript(script)
+        isCapsuleInitialized = true
     }
     
     @MainActor
     @discardableResult
     private func postMessage(method: String, arguments: [Encodable]) async throws -> Any? {
+        guard isCapsuleInitialized else { return nil }
         if let _ = continuation {
             throw CapsuleError.bridgeInUseError
         }
