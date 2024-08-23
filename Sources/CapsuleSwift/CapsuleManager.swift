@@ -158,7 +158,7 @@ extension CapsuleManager {
     
     public func checkIfUserExists(email: String) async throws -> Bool {
         let result = try await postMessage(method: "checkIfUserExists", arguments: [email])
-        return try decodeResult(result, expectedType: Bool.self)
+        return try decodeResult(result, expectedType: Bool.self, method: "checkIfUserExists")
     }
     
     public func createUser(email: String) async throws {
@@ -168,7 +168,7 @@ extension CapsuleManager {
     @MainActor
     public func login(authorizationController: AuthorizationController) async throws {
         let getWebChallengeResult = try await postMessage(method: "getWebChallenge", arguments: [])
-        let challenge = try decodeDictionaryResult(getWebChallengeResult, key: "challenge", expectedType: String.self)
+        let challenge = try decodeDictionaryResult(getWebChallengeResult, expectedType: String.self, method: "getWebChallenge", key: "challenge")
         
         let signIntoPasskeyAccountResult = try await passkeysManager.signIntoPasskeyAccount(authorizationController: authorizationController, challenge: challenge)
         
@@ -178,18 +178,19 @@ extension CapsuleManager {
         let signature = signIntoPasskeyAccountResult.signature.base64URLEncodedString()
         
         let verifyWebChallengeResult = try await postMessage(method: "verifyWebChallenge", arguments: [id, authenticatorData, clientDataJSON, signature])
-        let userId = try decodeResult(verifyWebChallengeResult, expectedType: String.self)
+        let userId = try decodeResult(verifyWebChallengeResult, expectedType: String.self, method: "verifyWebChallenge")
         
         let wallet = try await postMessage(method: "loginV2", arguments: [userId, id, signIntoPasskeyAccountResult.userID.base64URLEncodedString()])
-        let walletDict = try decodeResult(wallet, expectedType: [String: Any].self)
+        let walletDict = try decodeResult(wallet, expectedType: [String: Any].self, method: "loginV2")
         
+        print(walletDict)
         self.wallet = Wallet(result: walletDict)
         sessionState = .activeLoggedIn
     }
     
     public func verify(verificationCode: String) async throws -> String {
         let result = try await postMessage(method: "verifyEmail", arguments: [verificationCode])
-        let resultString = try decodeResult(result, expectedType: String.self)
+        let resultString = try decodeResult(result, expectedType: String.self, method: "verifyEmail")
         
         let paths = resultString.split(separator: "/")
         
@@ -221,7 +222,7 @@ extension CapsuleManager {
     
     public func setup2FA() async throws -> String {
         let result = try await postMessage(method: "setup2FA", arguments: [])
-        return try decodeDictionaryResult(result, key: "uri", expectedType: String.self)
+        return try decodeDictionaryResult(result, expectedType: String.self, method: "setup2FA", key: "uri")
     }
     
     public func enable2FA() async throws {
@@ -230,7 +231,7 @@ extension CapsuleManager {
     
     public func is2FASetup() async throws -> Bool {
         let result = try await postMessage(method: "check2FAStatus", arguments: [])
-        return try decodeDictionaryResult(result, key: "isSetup", expectedType: Bool.self)
+        return try decodeDictionaryResult(result, expectedType: Bool.self, method: "check2FAStatus", key: "isSetup")
     }
     
     public func resendVerificationCode() async throws {
@@ -239,17 +240,17 @@ extension CapsuleManager {
     
     public func isFullyLoggedIn() async throws -> Bool {
         let result = try await postMessage(method: "isFullyLoggedIn", arguments: [])
-        return try decodeResult(result, expectedType: Bool.self)
+        return try decodeResult(result, expectedType: Bool.self, method: "isFullyLoggedIn")
     }
     
     public func isSessionActive() async throws -> Bool {
         let result = try await postMessage(method: "isSessionActive", arguments: [])
-        return try decodeResult(result, expectedType: Bool.self)
+        return try decodeResult(result, expectedType: Bool.self, method: "isSessionActive")
     }
     
     public func exportSession() async throws -> String {
         let result = try await postMessage(method: "exportSession", arguments: [])
-        return try decodeResult(result, expectedType: String.self)
+        return try decodeResult(result, expectedType: String.self, method: "exportSession")
     }
     
     @MainActor
@@ -267,18 +268,18 @@ extension CapsuleManager {
     @MainActor
     public func createWallet(skipDistributable: Bool) async throws {
         let result = try await postMessage(method: "createWallet", arguments: [skipDistributable])
-        let walletArray = try decodeResult(result, expectedType: [[String: Any]].self)
+        let walletArray = try decodeResult(result, expectedType: [[String: Any]].self, method: "createWallet")
         guard let walletAndRecovery = walletArray.first else {
             throw CapsuleError.bridgeError("Empty wallet array returned")
         }
-        let walletDict = try decodeDictionaryResult(walletAndRecovery, key: "wallet", expectedType: [String: String].self)
+        let walletDict = try decodeDictionaryResult(walletAndRecovery, expectedType: [String: String].self, method: "createWallet", key: "wallet")
         self.wallet = Wallet(result: walletDict)
         self.sessionState = .activeLoggedIn
     }
     
     public func fetchWallets() async throws -> [Wallet] {
         let result = try await postMessage(method: "fetchWallets", arguments: [])
-        let walletsData = try decodeResult(result, expectedType: [[String: Any]].self)
+        let walletsData = try decodeResult(result, expectedType: [[String: Any]].self, method: "fetchWallets")
         return walletsData.map { Wallet(result: $0) }
     }
     
@@ -293,17 +294,17 @@ extension CapsuleManager {
 extension CapsuleManager {
     public func signMessage(walletId: String, message: String) async throws -> String {
         let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
-        return try decodeDictionaryResult(result, key: "signature", expectedType: String.self)
+        return try decodeDictionaryResult(result, expectedType: String.self, method: "signMessage", key: "signature")
     }
     
     public func signTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
         let result = try await postMessage(method: "signTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
-        return try decodeDictionaryResult(result, key: "signature", expectedType: String.self)
+        return try decodeDictionaryResult(result, expectedType: String.self, method: "signTransaction",  key: "signature")
     }
     
     public func sendTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
         let result = try await postMessage(method: "sendTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
-        return try decodeDictionaryResult(result, key: "signature", expectedType: String.self)
+        return try decodeDictionaryResult(result, expectedType: String.self, method: "sendTransaction", key: "signature")
     }
 }
 
@@ -312,17 +313,17 @@ extension CapsuleManager {
 
 @available(iOS 16.4, *)
 extension CapsuleManager {
-    func decodeResult<T>(_ result: Any?, expectedType: T.Type) throws -> T {
+    func decodeResult<T>(_ result: Any?, expectedType: T.Type, method: String) throws -> T {
         guard let value = result as? T else {
-            throw CapsuleError.bridgeError("Invalid result format: expected \(T.self)")
+            throw CapsuleError.bridgeError("METHOD_ERROR<\(method)>: Invalid result format expected \(T.self)")
         }
         return value
     }
     
-    func decodeDictionaryResult<T>(_ result: Any?, key: String, expectedType: T.Type) throws -> T {
-        let dict = try decodeResult(result, expectedType: [String: Any].self)
+    func decodeDictionaryResult<T>(_ result: Any?, expectedType: T.Type, method: String, key: String) throws -> T {
+        let dict = try decodeResult(result, expectedType: [String: Any].self, method: method)
         guard let value = dict[key] as? T else {
-            throw CapsuleError.bridgeError("Missing or invalid '\(key)' in result")
+            throw CapsuleError.bridgeError("KEY_ERROR<\(method)-\(key)>: Missing or invalid key result")
         }
         return value
     }
