@@ -12,7 +12,6 @@ import os
 
 enum CapsuleError: Error {
     case bridgeError(String)
-    case bridgeInUseError
     case bridgeTimeoutError
 }
 
@@ -21,8 +20,6 @@ extension CapsuleError: CustomStringConvertible {
         switch self {
         case .bridgeError(let info):
             return "The following error happened while the javascript bridge was executing: \(info)"
-        case .bridgeInUseError:
-            return "The javascript bridge is currently processing a request. Only one request may be triggered at a time."
         case .bridgeTimeoutError:
             return "The javascript bridge did not respond in time and the continuation has been cancelled."
         }
@@ -35,7 +32,7 @@ public class CapsuleManager: NSObject, ObservableObject {
     @MainActor @Published public var wallet: Wallet?
     @MainActor @Published public var sessionState: CapsuleSessionState = .unknown
     
-    public static let packageVersion = "0.0.2"
+    public static let packageVersion = "0.0.3"
     public var environment: CapsuleEnvironment {
         didSet {
             self.passkeysManager.relyingPartyIdentifier = environment.relyingPartyId
@@ -50,6 +47,8 @@ public class CapsuleManager: NSObject, ObservableObject {
     private let passkeysManager: PasskeysManager
     public private(set) var isCapsuleInitialized: Bool = false
     private var continuation: CheckedContinuation<Any?, Error>?
+    private var messageQueue: [(String, [Encodable], CheckedContinuation<Any?, Error>)] = []
+    private var isProcessingMessage = false
     
     // MARK: - Internal
     public init(environment: CapsuleEnvironment, apiKey: String) {
@@ -84,22 +83,42 @@ public class CapsuleManager: NSObject, ObservableObject {
     @discardableResult
     private func postMessage(method: String, arguments: [Encodable]) async throws -> Any? {
         guard isCapsuleInitialized else { return nil }
-        if let _ = continuation {
-            throw CapsuleError.bridgeInUseError
+
+        return try await withCheckedThrowingContinuation { continuation in
+            messageQueue.append((method, arguments, continuation))
+            processNextMessageIfNeeded()
+        }
+    }
+
+    private func processNextMessageIfNeeded() {
+        guard !isProcessingMessage, let (method, arguments, _) = messageQueue.first else { return }
+        
+        isProcessingMessage = true
+        let script = """
+          window.postMessage({
+            'messageType': 'Capsule#invokeMethod',
+            'methodName': '\(method)',
+            'arguments': \(arguments)
+          });
+        """
+
+        webView.evaluateJavaScript(script)
+    }
+    
+    private func completeCurrentMessage(with result: Result<Any?, Error>) {
+        guard let (_, _, continuation) = messageQueue.first else { return }
+        
+        messageQueue.removeFirst()
+        isProcessingMessage = false
+        
+        switch result {
+        case .success(let value):
+            continuation.resume(returning: value)
+        case .failure(let error):
+            continuation.resume(throwing: error)
         }
         
-        return try await withCheckedThrowingContinuation { continuation in
-            self.continuation = continuation
-            let script = """
-              window.postMessage({
-                'messageType': 'Capsule#invokeMethod',
-                'methodName': '\(method)',
-                'arguments': \(arguments)
-              });
-            """
-            
-            webView.evaluateJavaScript(script)
-        }
+        processNextMessageIfNeeded()
     }
 }
 
@@ -131,23 +150,17 @@ extension CapsuleManager: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let resp = message.body as? [String: Any],
               let method = resp["method"] else {
-            continuation?.resume(throwing: CapsuleError.bridgeError("Invalid response format"))
-            continuation = nil
+            completeCurrentMessage(with: .failure(CapsuleError.bridgeError("Invalid response format")))
             return
         }
-        
+
         if let error = resp["error"] as? String {
-            continuation?.resume(throwing: CapsuleError.bridgeError("\(method): \(error)"))
-            continuation = nil
-            return
+            completeCurrentMessage(with: .failure(CapsuleError.bridgeError("\(method): \(error)")))
         } else if resp["error"] != nil {
-            continuation?.resume(throwing: CapsuleError.bridgeError("\(method): Error occurred, but details are not available"))
-            continuation = nil
-            return
+            completeCurrentMessage(with: .failure(CapsuleError.bridgeError("\(method): Error occurred, but details are not available")))
+        } else {
+            completeCurrentMessage(with: .success(resp["responseData"]))
         }
-        
-        continuation?.resume(returning: resp["responseData"])
-        continuation = nil
     }
 }
 
@@ -183,7 +196,6 @@ extension CapsuleManager {
         let wallet = try await postMessage(method: "loginV2", arguments: [userId, id, signIntoPasskeyAccountResult.userID.base64URLEncodedString()])
         let walletDict = try decodeResult(wallet, expectedType: [String: Any].self, method: "loginV2")
         
-        print(walletDict)
         self.wallet = Wallet(result: walletDict)
         sessionState = .activeLoggedIn
     }
@@ -256,8 +268,12 @@ extension CapsuleManager {
     @MainActor
     public func logout() async throws {
         try await postMessage(method: "logout", arguments: [])
+        let dataStore = WKWebsiteDataStore.default()
+        let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
+        let dateFrom = Date(timeIntervalSince1970: 0)
+        await dataStore.removeData(ofTypes: dataTypes, modifiedSince: dateFrom)
         wallet = nil
-        sessionState = .active
+        self.sessionState = .inactive
     }
 }
 
