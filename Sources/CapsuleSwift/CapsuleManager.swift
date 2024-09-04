@@ -302,6 +302,12 @@ extension CapsuleManager {
     public func distributeNewWalletShare(walletId: String, userShare: String) async throws {
         try await postMessage(method: "distributeNewWalletShare", arguments: [walletId, userShare])
     }
+    
+    public func getEmail() async throws -> String {
+        let result = try await postMessage(method: "getEmail", arguments: [])
+        let email = try  decodeResult(result, expectedType: String.self, method: "getEmail")
+        return email
+    }
 }
 
 // MARK: - Transactions
