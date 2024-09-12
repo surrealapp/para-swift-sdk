@@ -283,7 +283,7 @@ extension CapsuleManager {
 extension CapsuleManager {
     @MainActor
     public func createWallet(skipDistributable: Bool) async throws {
-        let result = try await postMessage(method: "createWallet", arguments: [skipDistributable])
+        let result = try await postMessage(method: "createWallet", arguments: ["EVM", skipDistributable])
         let walletArray = try decodeResult(result, expectedType: [[String: Any]].self, method: "createWallet")
         guard let walletAndRecovery = walletArray.first else {
             throw CapsuleError.bridgeError("Empty wallet array returned")
