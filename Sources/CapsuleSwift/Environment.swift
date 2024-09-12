@@ -35,7 +35,7 @@ public enum CapsuleEnvironment: Hashable {
         case .beta(let jsBridgeUrl):
             return jsBridgeUrl ?? URL(string: "https://js-bridge.beta.usecapsule.com/")!
         case .prod(let jsBridgeUrl):
-            return jsBridgeUrl ?? URL(string: "https://js-bridge.usecapsule.com/")!
+            return jsBridgeUrl ?? URL(string: "https://js-bridge.prod.usecapsule.com/")!
         }
     }
     
