@@ -282,12 +282,6 @@ extension CapsuleManager {
     public func createWallet(skipDistributable: Bool) async throws {
         let _ = try await postMessage(method: "createWallet", arguments: ["EVM", skipDistributable])
         self.wallets = try await fetchWallets()
-//        let _ = try decodeResult(result, expectedType: [[String: Any]].self, method: "createWallet")
-//        guard let walletAndRecovery = walletArray.first else {
-//            throw CapsuleError.bridgeError("Empty wallet array returned")
-//        }
-//        let walletDict = try decodeDictionaryResult(walletAndRecovery, expectedType: [String: String].self, method: "createWallet", key: "wallet")
-//        self.wallet = Wallet(result: walletDict)
         self.sessionState = .activeLoggedIn
     }
     
