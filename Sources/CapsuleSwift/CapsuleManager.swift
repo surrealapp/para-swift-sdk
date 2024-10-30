@@ -329,7 +329,7 @@ extension CapsuleManager {
 extension CapsuleManager {
     func decodeResult<T>(_ result: Any?, expectedType: T.Type, method: String) throws -> T {
         guard let value = result as? T else {
-            throw CapsuleError.bridgeError("METHOD_ERROR<\(method)>: Invalid result format expected \(T.self)")
+            throw CapsuleError.bridgeError("METHOD_ERROR<\(method)>: Invalid result format expected \(T.self), but got \(result)")
         }
         return value
     }
