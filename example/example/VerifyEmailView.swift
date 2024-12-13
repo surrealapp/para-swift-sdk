@@ -15,7 +15,7 @@ struct VerifyEmailView: View {
     let email: String
     
     @State private var code = ""
-    @Binding var path: [NavigationDestination]
+
     
     @Environment(\.authorizationController) private var authorizationController
         
@@ -29,7 +29,6 @@ struct VerifyEmailView: View {
                 Task.init {
                     let biometricsId = try! await capsule.verify(verificationCode: code)
                     try! await capsule.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
-                    path.append(.wallet)
                     try! await capsule.createWallet(skipDistributable: false)
                 }
             }
@@ -39,5 +38,5 @@ struct VerifyEmailView: View {
 }
 
 #Preview {
-    VerifyEmailView(email: "", path: .constant([]))
+    VerifyEmailView(email: "")
 }
