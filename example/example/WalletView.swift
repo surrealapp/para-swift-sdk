@@ -10,17 +10,14 @@ import CapsuleSwift
 
 struct WalletView: View {
     @EnvironmentObject var capsule: CapsuleManager
-    
-    let wallet: Wallet?
-    
-    @Binding var path: [NavigationDestination]
-    
+    @EnvironmentObject var appRootManager: AppRootManager
+        
     @State private var messageToSign = ""
     @State private var result = ""
     
     var body: some View {
         VStack {
-            if let wallet = wallet {
+            if let wallet = capsule.wallets.first {
                 Spacer()
                 Text("Wallet Address: \(wallet.address!)")
                 
@@ -30,7 +27,9 @@ struct WalletView: View {
                 
                 Button("Sign Message") {
                     Task.init {
-                        let messageSignature = try await capsule.signMessage(walletId: wallet.id, message: messageToSign)
+                        let messageBytes = messageToSign.data(using: .utf8)
+                        let messageBase64 = messageBytes?.base64EncodedString()
+                        let messageSignature = try await capsule.signMessage(walletId: wallet.id, message: messageBase64!)
                         result = "messageSignature: \(messageSignature)"
                     }
                 }.buttonStyle(.bordered)
@@ -87,7 +86,7 @@ struct WalletView: View {
                 Button("Logout") {
                     Task.init {
                         try await capsule.logout()
-                        path = []
+                        appRootManager.currentRoot = .authentication
                     }
                 }.buttonStyle(.bordered)
             } else {
@@ -100,9 +99,5 @@ struct WalletView: View {
 }
 
 #Preview {
-    WalletView(wallet: nil, path: .constant([])).environmentObject(CapsuleManager(environment: defaultDevEnv, apiKey: ""))
-}
-
-#Preview {
-    WalletView(wallet: Wallet(id: "1", signer: nil, address: "0x1f328fejin3", publicKey: nil), path: .constant([])).environmentObject(CapsuleManager(environment: defaultDevEnv, apiKey: ""))
+    WalletView().environmentObject(CapsuleManager(environment: .sandbox, apiKey: ""))
 }

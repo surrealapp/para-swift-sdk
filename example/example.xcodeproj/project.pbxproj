@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E86A473F2D0CA0A400546CC2 /* EmailAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86A473E2D0CA0A400546CC2 /* EmailAuthView.swift */; };
+		E86A47412D0CA63700546CC2 /* AppRootManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86A47402D0CA62F00546CC2 /* AppRootManager.swift */; };
 		E8F93B2C2C21EBED006AA3F6 /* exampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F93B2B2C21EBED006AA3F6 /* exampleApp.swift */; };
 		E8F93B302C21EBEE006AA3F6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E8F93B2F2C21EBEE006AA3F6 /* Assets.xcassets */; };
 		E8F93B332C21EBEE006AA3F6 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E8F93B322C21EBEE006AA3F6 /* Preview Assets.xcassets */; };
@@ -17,6 +19,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E86A473E2D0CA0A400546CC2 /* EmailAuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmailAuthView.swift; sourceTree = "<group>"; };
+		E86A47402D0CA62F00546CC2 /* AppRootManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRootManager.swift; sourceTree = "<group>"; };
 		E8F93B282C21EBED006AA3F6 /* example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E8F93B2B2C21EBED006AA3F6 /* exampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = exampleApp.swift; sourceTree = "<group>"; };
 		E8F93B2F2C21EBEE006AA3F6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -61,9 +65,11 @@
 		E8F93B2A2C21EBED006AA3F6 /* example */ = {
 			isa = PBXGroup;
 			children = (
+				E86A47402D0CA62F00546CC2 /* AppRootManager.swift */,
 				E8F93B432C21ED67006AA3F6 /* example.entitlements */,
 				E8F93B2B2C21EBED006AA3F6 /* exampleApp.swift */,
 				E8F93B3D2C21ECFB006AA3F6 /* UserAuthView.swift */,
+				E86A473E2D0CA0A400546CC2 /* EmailAuthView.swift */,
 				E8F93B3F2C21ED00006AA3F6 /* VerifyEmailView.swift */,
 				E8F93B412C21ED05006AA3F6 /* WalletView.swift */,
 				E8F93B2F2C21EBEE006AA3F6 /* Assets.xcassets */,
@@ -160,10 +166,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E86A473F2D0CA0A400546CC2 /* EmailAuthView.swift in Sources */,
 				E8F93B402C21ED00006AA3F6 /* VerifyEmailView.swift in Sources */,
 				E8F93B422C21ED05006AA3F6 /* WalletView.swift in Sources */,
 				E8F93B2C2C21EBED006AA3F6 /* exampleApp.swift in Sources */,
 				E8F93B3E2C21ECFB006AA3F6 /* UserAuthView.swift in Sources */,
+				E86A47412D0CA63700546CC2 /* AppRootManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

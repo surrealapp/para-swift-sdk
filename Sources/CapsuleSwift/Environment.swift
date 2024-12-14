@@ -9,19 +9,19 @@ import Foundation
 
 public enum CapsuleEnvironment: Hashable {
     case dev(relyingPartyId: String, jsBridgeUrl: URL?)
-    case sandbox(jsBridgeUrl: URL?)
-    case beta(jsBridgeUrl: URL?)
-    case prod(jsBridgeUrl: URL?)
+    case sandbox
+    case beta
+    case prod
 
     var relyingPartyId: String {
         switch self {
         case .dev(let relyingPartyId, _):
             return relyingPartyId
-        case .sandbox(_):
+        case .sandbox:
             return "app.sandbox.usecapsule.com"
-        case .beta(_):
+        case .beta:
             return "app.beta.usecapsule.com"
-        case .prod(_):
+        case .prod:
             return "app.usecapsule.com"
         }
     }
@@ -30,12 +30,12 @@ public enum CapsuleEnvironment: Hashable {
         switch self {
         case .dev(_, let jsBridgeUrl):
             return jsBridgeUrl ?? URL(string: "http://localhost:5173")!
-        case .sandbox(let jsBridgeUrl):
-            return jsBridgeUrl ?? URL(string: "https://js-bridge.sandbox.usecapsule.com/")!
-        case .beta(let jsBridgeUrl):
-            return jsBridgeUrl ?? URL(string: "https://js-bridge.beta.usecapsule.com/")!
-        case .prod(let jsBridgeUrl):
-            return jsBridgeUrl ?? URL(string: "https://js-bridge.prod.usecapsule.com/")!
+        case .sandbox:
+            return URL(string: "https://js-bridge.sandbox.usecapsule.com/")!
+        case .beta:
+            return URL(string: "https://js-bridge.beta.usecapsule.com/")!
+        case .prod:
+            return URL(string: "https://js-bridge.prod.usecapsule.com/")!
         }
     }
     
@@ -43,11 +43,11 @@ public enum CapsuleEnvironment: Hashable {
         switch self {
         case .dev(_ ,_):
             return "DEV"
-        case .sandbox(_):
+        case .sandbox:
             return "SANDBOX"
-        case .beta(_):
+        case .beta:
             return "BETA"
-        case .prod(_):
+        case .prod:
             return "PROD"
         }
     }
