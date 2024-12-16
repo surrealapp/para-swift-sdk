@@ -10,7 +10,7 @@ import CapsuleSwift
 
 @main
 struct exampleApp: App {
-    @StateObject private var capsuleManager = CapsuleManager(environment: .beta, apiKey: "9b667f53214d63add622567c51122511")
+    @StateObject private var capsuleManager = CapsuleManager(environment: .sandbox, apiKey: "8ee2d015fbc6062a6e30bdc472f2946c")
     @StateObject private var appRootManager = AppRootManager()
     
     var body: some Scene {
