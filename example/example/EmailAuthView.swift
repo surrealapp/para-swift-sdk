@@ -18,6 +18,8 @@ struct EmailAuthView: View {
     @State private var newApiKey: String = ""
     
     @State private var showingSetApiKeyAlert = false
+    
+    @State private var shouldNavigateToVerifyEmail = false
         
     @Environment(\.authorizationController) private var authorizationController
     var body: some View {
@@ -27,23 +29,26 @@ struct EmailAuthView: View {
                 .disableAutocorrection(true)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .keyboardType(.emailAddress)
-            HStack {
-                Button {
-                    Task.init {
-                        print("checking if user exists...")
-                        let userExists = try await capsuleManager.checkIfUserExists(email: email)
-                        print(userExists)
-                        if userExists {
-                            return
-                        }
-                        
-                        try await capsuleManager.createUser(email: email)
+            Button {
+                Task.init {
+                    print("checking if user exists...")
+                    let userExists = try await capsuleManager.checkIfUserExists(email: email)
+                    print(userExists)
+                    if userExists {
+                        return
                     }
-                } label: {
-                    Text("Sign Up").frame(maxWidth: .infinity)
+                    
+                    try await capsuleManager.createUser(email: email)
+                    shouldNavigateToVerifyEmail = true
                 }
+            } label: {
+                Text("Sign Up").frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .navigationDestination(isPresented: $shouldNavigateToVerifyEmail) {
+                VerifyEmailView(email: email)
+            }
+            
             HStack {
                 Rectangle().frame(height: 1)
                 Text("Or")
