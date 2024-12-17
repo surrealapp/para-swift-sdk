@@ -15,6 +15,8 @@ struct WalletView: View {
     @State private var messageToSign = ""
     @State private var result = ""
     
+    @State private var creatingWallet = false
+    
     var body: some View {
         VStack {
             if let wallet = capsule.wallets.first {
@@ -32,40 +34,14 @@ struct WalletView: View {
                         let messageSignature = try await capsule.signMessage(walletId: wallet.id, message: messageBase64!)
                         result = "messageSignature: \(messageSignature)"
                     }
-                }.buttonStyle(.bordered)
+                }.buttonStyle(.bordered).disabled(messageToSign.isEmpty)
                 
                 VStack {
                     HStack {
-                        Button("Fully Logged In?") {
-                            Task.init {
-                                let isFullyLoggedIn = try await capsule.isFullyLoggedIn()
-                                result = "isFullyLoggedIn: \(isFullyLoggedIn)"
-                            }
-                        }
                         Button("Session Active?") {
                             Task.init {
                                 let isSessionActive = try await capsule.isSessionActive()
                                 result = "isSessionActive: \(isSessionActive)"
-                            }
-                        }
-                    }.buttonStyle(.bordered)
-                    HStack {
-                        Button("2FA Status") {
-                            Task.init {
-                                let status = try await capsule.is2FASetup()
-                                result = "2FA Status: \(status)"
-                            }
-                        }
-                        Button("Setup 2FA") {
-                            Task.init {
-                                let status = try await capsule.setup2FA()
-                                result = "Setup 2FA: \(status)"
-                            }
-                        }
-                        Button("Enable 2FA") {
-                            Task.init {
-                                try await capsule.enable2FA()
-                                result = "Enabled 2FA"
                             }
                         }
                     }.buttonStyle(.bordered)
@@ -90,8 +66,25 @@ struct WalletView: View {
                     }
                 }.buttonStyle(.bordered)
             } else {
-                ProgressView()
-                Text("Creating wallet...")
+                Button {
+                    Task.init {
+                        creatingWallet = true
+                        try await capsule.createWallet(skipDistributable: false)
+                        creatingWallet = false
+                    }
+                } label: {
+                    Group {
+                        if (creatingWallet) {
+                            HStack {
+                                Text("Creating Wallet...")
+                                ProgressView()
+                            }
+                        } else {
+                            Text("Create Wallet")
+                        }
+                    }.frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
             }
         }
         .padding(.horizontal)
