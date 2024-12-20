@@ -1,10 +1,3 @@
-//
-//  File.swift
-//  
-//
-//  Created by Brian Corbin on 6/3/24.
-//
-
 import Foundation
 
 public enum CapsuleEnvironment: Hashable {
@@ -12,43 +5,45 @@ public enum CapsuleEnvironment: Hashable {
     case sandbox
     case beta
     case prod
-
-    var relyingPartyId: String {
+    
+    private var config: (relyingPartyId: String, jsBridgeUrl: URL, name: String) {
         switch self {
-        case .dev(let relyingPartyId, _):
-            return relyingPartyId
+        case .dev(let relyingPartyId, let jsBridgeUrl):
+            return (
+                relyingPartyId,
+                jsBridgeUrl ?? URL(string: "http://localhost:5173")!,
+                "DEV"
+            )
         case .sandbox:
-            return "app.sandbox.usecapsule.com"
+            return (
+                "app.sandbox.usecapsule.com",
+                URL(string: "https://js-bridge.sandbox.usecapsule.com/")!,
+                "SANDBOX"
+            )
         case .beta:
-            return "app.beta.usecapsule.com"
+            return (
+                "app.beta.usecapsule.com",
+                URL(string: "https://js-bridge.beta.usecapsule.com/")!,
+                "BETA"
+            )
         case .prod:
-            return "app.usecapsule.com"
+            return (
+                "app.usecapsule.com",
+                URL(string: "https://js-bridge.prod.usecapsule.com/")!,
+                "PROD"
+            )
         }
+    }
+    
+    var relyingPartyId: String {
+        config.relyingPartyId
     }
     
     var jsBridgeUrl: URL {
-        switch self {
-        case .dev(_, let jsBridgeUrl):
-            return jsBridgeUrl ?? URL(string: "http://localhost:5173")!
-        case .sandbox:
-            return URL(string: "https://js-bridge.sandbox.usecapsule.com/")!
-        case .beta:
-            return URL(string: "https://js-bridge.beta.usecapsule.com/")!
-        case .prod:
-            return URL(string: "https://js-bridge.prod.usecapsule.com/")!
-        }
+        config.jsBridgeUrl
     }
     
     var name: String {
-        switch self {
-        case .dev(_ ,_):
-            return "DEV"
-        case .sandbox:
-            return "SANDBOX"
-        case .beta:
-            return "BETA"
-        case .prod:
-            return "PROD"
-        }
+        config.name
     }
 }
