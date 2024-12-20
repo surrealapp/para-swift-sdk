@@ -2,7 +2,8 @@ import SwiftUI
 import WebKit
 import os
 
-@available(iOS 16.4, macOS 10.15, *)
+#if os(iOS)
+@available(iOS 16.4,*)
 @MainActor
 public class CapsuleWebView: NSObject, ObservableObject {
     @Published public private(set) var isReady: Bool = false
@@ -167,7 +168,7 @@ public class CapsuleWebView: NSObject, ObservableObject {
     }
 }
 
-@available(iOS 16.4, macOS 10.15, *)
+@available(iOS 16.4,*)
 extension CapsuleWebView: WKNavigationDelegate {
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         initCapsule()
@@ -185,7 +186,7 @@ extension CapsuleWebView: WKNavigationDelegate {
     }
 }
 
-@available(iOS 16.4, macOS 10.15, *)
+@available(iOS 16.4,*)
 extension CapsuleWebView: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "callback" else { return }
@@ -197,7 +198,7 @@ extension CapsuleWebView: WKScriptMessageHandler {
     }
 }
 
-@available(iOS 16.4, macOS 10.15, *)
+@available(iOS 16.4,*)
 enum CapsuleWebViewError: Error, CustomStringConvertible {
     case webViewNotReady
     case invalidArguments(String)
@@ -218,7 +219,7 @@ enum CapsuleWebViewError: Error, CustomStringConvertible {
     }
 }
 
-@available(iOS 16.4, macOS 10.15, *)
+@available(iOS 16.4,*)
 private class LeakAvoider: NSObject, WKScriptMessageHandler {
     weak var delegate: WKScriptMessageHandler?
     init(delegate: WKScriptMessageHandler?) { self.delegate = delegate }
@@ -227,7 +228,7 @@ private class LeakAvoider: NSObject, WKScriptMessageHandler {
     }
 }
 
-@available(iOS 16.4, macOS 10.15, *)
+@available(iOS 16.4,*)
 struct AnyEncodable: Encodable {
     private let encodeFunc: (Encoder) throws -> Void
     init<T: Encodable>(_ value: T) {
@@ -239,3 +240,4 @@ struct AnyEncodable: Encodable {
         try encodeFunc(encoder)
     }
 }
+#endif

@@ -2,7 +2,8 @@ import SwiftUI
 import AuthenticationServices
 import WebKit
 
-@available(iOS 16.4, macOS 12.0, *)
+#if os(iOS)
+@available(iOS 16.4,*)
 @MainActor
 public class CapsuleManager: NSObject, ObservableObject {
     @Published public var wallets: [Wallet] = []
@@ -77,7 +78,7 @@ public class CapsuleManager: NSObject, ObservableObject {
     }
 }
 
-@available(iOS 16.4, macOS 12.0, *)
+@available(iOS 16.4,*)
 extension CapsuleManager {
     public func checkIfUserExists(email: String) async throws -> Bool {
         let result = try await postMessage(method: "checkIfUserExists", arguments: [email])
@@ -191,7 +192,7 @@ extension CapsuleManager {
     }
 }
 
-@available(iOS 16.4, macOS 12.0, *)
+@available(iOS 16.4,*)
 extension CapsuleManager {
     @MainActor
     public func createWallet(skipDistributable: Bool) async throws {
@@ -216,7 +217,7 @@ extension CapsuleManager {
     }
 }
 
-@available(iOS 16.4, macOS 12.0, *)
+@available(iOS 16.4,*)
 extension CapsuleManager {
     public func signMessage(walletId: String, message: String) async throws -> String {
         let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
@@ -247,3 +248,4 @@ enum CapsuleError: Error, CustomStringConvertible {
         }
     }
 }
+#endif

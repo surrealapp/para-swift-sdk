@@ -1,10 +1,3 @@
-//
-//  File.swift
-//  
-//
-//  Created by Brian Corbin on 5/31/24.
-//
-
 import Foundation
 import os
 
