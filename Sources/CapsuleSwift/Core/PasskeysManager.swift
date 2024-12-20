@@ -14,13 +14,13 @@ import os
 
 
 
-@available(iOS 16.4, *)
+@available(iOS 16.4, macOS 13.3, *)
 public enum AuthorizationHandlingError: Error {
     case unknownAuthorizationResult(ASAuthorizationResult)
     case otherError
 }
 
-@available(iOS 16.4, *)
+@available(iOS 16.4, macOS 13.3, *)
 extension AuthorizationHandlingError: LocalizedError {
     public var errorDescription: String? {
             switch self {
@@ -34,7 +34,7 @@ extension AuthorizationHandlingError: LocalizedError {
         }
 }
 
-@available(iOS 16.4, *)
+@available(iOS 16.4, macOS 13.3, *)
 final class PasskeysManager: NSObject, ASAuthorizationControllerDelegate {
     
     public var relyingPartyIdentifier: String
