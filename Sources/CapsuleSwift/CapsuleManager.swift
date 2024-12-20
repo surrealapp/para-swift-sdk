@@ -31,19 +31,29 @@ public class CapsuleManager: NSObject, ObservableObject {
     }
     
     private func waitForCapsuleReady() async {
-        while !capsuleWebView.isReady && capsuleWebView.initializationError == nil {
+        let startTime = Date()
+        let maxWaitDuration: TimeInterval = 30.0
+        while !capsuleWebView.isReady && capsuleWebView.initializationError == nil && capsuleWebView.lastError == nil {
+            if Date().timeIntervalSince(startTime) > maxWaitDuration {
+                sessionState = .inactive
+                return
+            }
             try? await Task.sleep(nanoseconds: 100_000_000)
         }
-        if capsuleWebView.initializationError == nil {
-            if let active = try? await isSessionActive(), active {
-                if let loggedIn = try? await isFullyLoggedIn(), loggedIn {
-                    sessionState = .activeLoggedIn
-                } else {
-                    sessionState = .active
-                }
+
+        if capsuleWebView.initializationError != nil || capsuleWebView.lastError != nil {
+            sessionState = .inactive
+            return
+        }
+
+        if let active = try? await isSessionActive(), active {
+            if let loggedIn = try? await isFullyLoggedIn(), loggedIn {
+                sessionState = .activeLoggedIn
             } else {
-                sessionState = .inactive
+                sessionState = .active
             }
+        } else {
+            sessionState = .inactive
         }
     }
     
@@ -118,17 +128,23 @@ extension CapsuleManager {
         _ = userHandle.withUnsafeMutableBytes {
             SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!)
         }
-        
+
         let userHandleEncoded = userHandle.base64URLEncodedString()
         let result = try await passkeysManager.createPasskeyAccount(authorizationController: authorizationController,
                                                                     username: email, userHandle: userHandle)
-        
-        let attestationObjectEncoded = result.rawAttestationObject!.base64URLEncodedString()
-        let clientDataJSONEncoded = result.rawClientDataJSON.base64URLEncodedString()
-        let credentialIDEncoded = result.credentialID.base64URLEncodedString()
-        
+
+        guard let rawAttestation = result.rawAttestationObject else {
+            throw CapsuleError.bridgeError("Missing attestation object")
+        }
+        let rawClientData = result.rawClientDataJSON
+        let credID = result.credentialID
+
+        let attestationObjectEncoded = rawAttestation.base64URLEncodedString()
+        let clientDataJSONEncoded = rawClientData.base64URLEncodedString()
+        let credentialIDEncoded = credID.base64URLEncodedString()
+
         _ = try await postMessage(method: "generatePasskeyV2",
-                                  arguments: [attestationObjectEncoded, clientDataJSONEncoded, credentialIDEncoded, userHandleEncoded, biometricsId])
+                                arguments: [attestationObjectEncoded, clientDataJSONEncoded, credentialIDEncoded, userHandleEncoded, biometricsId])
     }
     
     public func setup2FA() async throws -> String {
