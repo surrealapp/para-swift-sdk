@@ -235,7 +235,7 @@ extension CapsuleManager {
     }
 }
 
-enum CapsuleError: Error, CustomStringConvertible {
+public enum CapsuleError: Error, CustomStringConvertible {
     case bridgeError(String)
     case bridgeTimeoutError
     
