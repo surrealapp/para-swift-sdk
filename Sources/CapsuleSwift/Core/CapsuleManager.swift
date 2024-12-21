@@ -239,7 +239,7 @@ public enum CapsuleError: Error, CustomStringConvertible {
     case bridgeError(String)
     case bridgeTimeoutError
     
-    var description: String {
+    public var description: String {
         switch self {
         case .bridgeError(let info):
             return "The following error happened while the javascript bridge was executing: \(info)"
