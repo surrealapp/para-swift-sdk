@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  swift-example
-//
-//  Created by Brian Corbin on 4/19/24.
-//
-
 import SwiftUI
 import CapsuleSwift
 
@@ -14,16 +7,27 @@ enum NavigationDestination {
 
 struct UserAuthView: View {
     @EnvironmentObject var capsuleManager: CapsuleManager
-        
+    
     var body: some View {
         NavigationStack {
-            ZStack {
-                CapsuleWebView(capsuleManager: capsuleManager).hidden()
-                List {
-                    NavigationLink(destination: EmailAuthView().environmentObject(capsuleManager)) {
-                        AuthTypeView(image: Image(systemName: "envelope"), title: "Email + Passkey Authentication", description: "Implement email based authentication with passkey support for enhanced security")
-                    }
+            VStack(spacing: 20) {
+                Text("Select an Authentication Method")
+                    .font(.title2)
+                    .bold()
+                    .padding(.top)
+
+                // Single link for Email + Passkey Auth
+                NavigationLink(destination: EmailAuthView().environmentObject(capsuleManager)) {
+                    AuthTypeView(
+                        image: Image(systemName: "envelope"),
+                        title: "Email + Passkey",
+                        description: "Use your email to create or sign in with a passkey."
+                    )
                 }
+                .buttonStyle(.borderedProminent)
+                .padding(.horizontal)
+                
+                Spacer()
             }
             .navigationTitle("Authentication")
         }
@@ -31,26 +35,23 @@ struct UserAuthView: View {
 }
 
 struct AuthTypeView: View {
-    
     let image: Image
     let title: String
     let description: String
     
     var body: some View {
-        VStack (alignment: .leading) {
-            HStack {
-                image.font(.title).foregroundStyle(.red).padding(.trailing)
-                Text(title).font(.title)
+        HStack(spacing: 10) {
+            image
+                .font(.title)
+                .foregroundStyle(.blue)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                Text(description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
             }
-            Text(description)
         }
     }
-}
-
-#Preview("User Auth") {
-    UserAuthView().environmentObject(CapsuleManager(environment: .sandbox, apiKey: "vesbrsbtevrwce"))
-}
-
-#Preview("Auth Type") {
-    AuthTypeView(image: Image(systemName: "envelope"), title: "Email + Passkey Authentication", description: "Implement email based authentication with passkey support for enhanced security")
 }
