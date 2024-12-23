@@ -103,7 +103,7 @@ This will allow you to use passkeys that have been created on any app that uses 
 
   
 
-CapsuleSwift provides an interface to Capsule services from within iOS applications using SwiftUI (Support for UIKit comming soon).
+CapsuleSwift provides an interface to Capsule services from within iOS applications using SwiftUI (Support for UIKit coming soon).
 
   
 
