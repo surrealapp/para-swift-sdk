@@ -6,6 +6,7 @@ import os
 @available(iOS 16.4,*)
 @MainActor
 public class CapsuleWebView: NSObject, ObservableObject {
+    
     @Published public private(set) var isReady: Bool = false
     @Published public var initializationError: Error?
     @Published public var lastError: Error?
@@ -15,7 +16,7 @@ public class CapsuleWebView: NSObject, ObservableObject {
     public static let packageVersion = "0.0.3"
     
     private let webView: WKWebView
-    private var requestTimeout: TimeInterval
+    private let requestTimeout: TimeInterval
     
     private var pendingRequests: [String: (continuation: CheckedContinuation<Any?, Error>, timeoutTask: Task<Void, Never>?)] = [:]
     private var isCapsuleInitialized = false
@@ -29,6 +30,8 @@ public class CapsuleWebView: NSObject, ObservableObject {
         let userContentController = WKUserContentController()
         config.userContentController = userContentController
         self.webView = WKWebView(frame: .zero, configuration: config)
+        
+        webView.isInspectable = true
         
         super.init()
         
@@ -69,10 +72,15 @@ public class CapsuleWebView: NSObject, ObservableObject {
                 return
             }
             
-            // Insert into pending requests before evaluating JS
-            // We'll create a timeout task to handle request timeouts
             let timeoutTask: Task<Void, Never> = Task { [weak self] in
-                try? await Task.sleep(nanoseconds: UInt64(self?.requestTimeout ?? 30.0 * 1_000_000_000))
+                let duration = self?.requestTimeout ?? 30.0
+                
+                do {
+                    try await Task.sleep(nanoseconds: UInt64(duration * 1_000_000_000))
+                } catch {
+                    return
+                }
+                
                 guard let self = self else { return }
                 if let entry = self.pendingRequests.removeValue(forKey: requestId) {
                     entry.continuation.resume(throwing: CapsuleWebViewError.requestTimeout)
@@ -84,7 +92,6 @@ public class CapsuleWebView: NSObject, ObservableObject {
             webView.evaluateJavaScript("window.postMessage(\(jsonString));") { [weak self] _, error in
                 guard let self = self else { return }
                 if let error = error {
-                    // JS evaluation failed, remove request and cancel timeout
                     let entry = self.pendingRequests.removeValue(forKey: requestId)
                     entry?.timeoutTask?.cancel()
                     continuation.resume(throwing: error)
@@ -99,7 +106,6 @@ public class CapsuleWebView: NSObject, ObservableObject {
     }
     
     private func initCapsule() {
-        // Encode arguments as JSON to avoid injection issues
         let args: [String: String] = [
             "environment": environment.name,
             "apiKey": apiKey,
@@ -109,7 +115,6 @@ public class CapsuleWebView: NSObject, ObservableObject {
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: args, options: []),
               let jsonString = String(data: jsonData, encoding: .utf8) else {
-            // If encoding fails here, set an error
             lastError = CapsuleWebViewError.invalidArguments("Failed to encode init arguments")
             return
         }
@@ -129,35 +134,29 @@ public class CapsuleWebView: NSObject, ObservableObject {
     }
     
     private func handleCallback(response: [String: Any]) {
-        // Validate response
         guard let method = response["method"] as? String else {
             lastError = CapsuleWebViewError.bridgeError("Invalid response: missing 'method'")
             return
         }
         
-        // Handle initialization
         if method == "Capsule#init" && response["requestId"] == nil {
             self.isCapsuleInitialized = true
             self.isReady = true
             return
         }
         
-        // Expecting requestId for normal method responses
         guard let requestId = response["requestId"] as? String else {
             lastError = CapsuleWebViewError.bridgeError("Invalid response: missing 'requestId' for \(method)")
             return
         }
         
         guard let entry = pendingRequests.removeValue(forKey: requestId) else {
-            // Unexpected response for unknown requestId
             lastError = CapsuleWebViewError.bridgeError("Received response for unknown requestId: \(requestId)")
             return
         }
         
-        // Cancel timeout
         entry.timeoutTask?.cancel()
         
-        // Check for errors
         if let errorMessage = response["error"] as? String {
             entry.continuation.resume(throwing: CapsuleWebViewError.bridgeError(errorMessage))
             return
@@ -175,13 +174,10 @@ extension CapsuleWebView: WKNavigationDelegate {
     }
     
     public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        os_log("WebView failed to load: %@", type: .error, error.localizedDescription)
         initializationError = error
-        // We can decide how to handle this: not ready, maybe retry?
     }
     
     public func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
-        os_log("WebView provisional load failed: %@", type: .error, error.localizedDescription)
         initializationError = error
     }
 }
