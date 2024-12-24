@@ -24,7 +24,7 @@ struct UserAuthView: View {
                         description: "Use your email to create or sign in with a passkey."
                     )
                 }
-                .buttonStyle(.borderedProminent)
+                .buttonStyle(.bordered)
                 .padding(.horizontal)
                 
                 Spacer()

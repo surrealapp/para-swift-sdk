@@ -76,7 +76,26 @@ struct EmailAuthView: View {
                     .environmentObject(appRootManager)
             }
             
+            HStack {
+                Rectangle().frame(height: 1)
+                Text("Or")
+                Rectangle().frame(height: 1)
+            }.padding(.vertical)
+            
+            Button {
+                Task.init {
+                    try await capsuleManager.login(authorizationController: authorizationController)
+                    appRootManager.currentRoot = .home
+                }
+            } label: {
+                Text("Log In with Passkey")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+
+            
             Spacer()
+            
         }
         .padding()
         .navigationTitle("Email + Passkey")
