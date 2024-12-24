@@ -10,26 +10,20 @@ struct UserAuthView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                Text("Select an Authentication Method")
-                    .font(.title2)
-                    .bold()
-                    .padding(.top)
-
+            List {
                 // Single link for Email + Passkey Auth
-                NavigationLink(destination: EmailAuthView().environmentObject(capsuleManager)) {
-                    AuthTypeView(
-                        image: Image(systemName: "envelope"),
-                        title: "Email + Passkey",
-                        description: "Use your email to create or sign in with a passkey."
-                    )
+                Section {
+                    NavigationLink(destination: EmailAuthView().environmentObject(capsuleManager)) {
+                        AuthTypeView(
+                            image: Image(systemName: "envelope"),
+                            title: "Email + Passkey",
+                            description: "Use your email to create or sign in with a passkey."
+                        )
+                    }
                 }
-                .buttonStyle(.bordered)
-                .padding(.horizontal)
-                
-                Spacer()
             }
             .navigationTitle("Authentication")
+            .listStyle(.insetGrouped)
         }
     }
 }
@@ -40,18 +34,12 @@ struct AuthTypeView: View {
     let description: String
     
     var body: some View {
-        HStack(spacing: 10) {
-            image
-                .font(.title)
-                .foregroundStyle(.blue)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+        VStack (alignment: .leading) {
+            HStack {
+                image.font(.title).foregroundStyle(.red).padding(.trailing)
+                Text(title).font(.title)
             }
+            Text(description)
         }
     }
 }
