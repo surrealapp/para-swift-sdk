@@ -11,21 +11,7 @@ init() {
     
     let environment: CapsuleEnvironment = environmentString == "sandbox" ? .sandbox : .beta
     
-    let sandboxApiKey = Bundle.main.object(forInfoDictionaryKey: "CAPSULE_SANDBOX_API_KEY") as? String
-    let betaApiKey = Bundle.main.object(forInfoDictionaryKey: "CAPSULE_BETA_API_KEY") as? String
-    
-    let apiKey: String
-    if environment == .sandbox {
-        guard let key = sandboxApiKey, !key.isEmpty else {
-            fatalError("CAPSULE_SANDBOX_API_KEY not found or empty in configuration.")
-        }
-        apiKey = key
-    } else {
-        guard let key = betaApiKey, !key.isEmpty else {
-            fatalError("CAPSULE_BETA_API_KEY not found or empty in configuration.")
-        }
-        apiKey = key
-    }
+    let apiKey = Bundle.main.object(forInfoDictionaryKey: "CAPSULE_API_KEY") as! String
     
     _capsuleManager = StateObject(wrappedValue: CapsuleManager(environment: environment, apiKey: apiKey))
 }

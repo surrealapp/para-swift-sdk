@@ -4,12 +4,10 @@
 <dict>
 	<key></key>
 	<string></string>
-	<key>CAPSULE_BETA_API_KEY</key>
-	<string>$(CAPSULE_BETA_API_KEY)</string>
+	<key>CAPSULE_API_KEY</key>
+	<string>$(CAPSULE_API_KEY)</string>
 	<key>CAPSULE_ENVIRONMENT</key>
 	<string>$(CAPSULE_ENVIRONMENT)</string>
-	<key>CAPSULE_SANDBOX_API_KEY</key>
-	<string>$(CAPSULE_SANDBOX_API_KEY)</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict/>
