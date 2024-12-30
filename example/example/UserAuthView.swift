@@ -1,10 +1,3 @@
-//
-//  ContentView.swift
-//  swift-example
-//
-//  Created by Brian Corbin on 4/19/24.
-//
-
 import SwiftUI
 import CapsuleSwift
 
@@ -14,24 +7,28 @@ enum NavigationDestination {
 
 struct UserAuthView: View {
     @EnvironmentObject var capsuleManager: CapsuleManager
-        
+    
     var body: some View {
         NavigationStack {
-            ZStack {
-                CapsuleWebView(capsuleManager: capsuleManager).hidden()
-                List {
+            List {
+                // Single link for Email + Passkey Auth
+                Section {
                     NavigationLink(destination: EmailAuthView().environmentObject(capsuleManager)) {
-                        AuthTypeView(image: Image(systemName: "envelope"), title: "Email + Passkey Authentication", description: "Implement email based authentication with passkey support for enhanced security")
+                        AuthTypeView(
+                            image: Image(systemName: "envelope"),
+                            title: "Email + Passkey",
+                            description: "Use your email to create or sign in with a passkey."
+                        )
                     }
                 }
             }
             .navigationTitle("Authentication")
+            .listStyle(.insetGrouped)
         }
     }
 }
 
 struct AuthTypeView: View {
-    
     let image: Image
     let title: String
     let description: String
@@ -45,12 +42,4 @@ struct AuthTypeView: View {
             Text(description)
         }
     }
-}
-
-#Preview("User Auth") {
-    UserAuthView().environmentObject(CapsuleManager(environment: .sandbox, apiKey: "vesbrsbtevrwce"))
-}
-
-#Preview("Auth Type") {
-    AuthTypeView(image: Image(systemName: "envelope"), title: "Email + Passkey Authentication", description: "Implement email based authentication with passkey support for enhanced security")
 }

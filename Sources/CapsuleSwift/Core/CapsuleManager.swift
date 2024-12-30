@@ -1,36 +1,13 @@
-//
-//  Capsule.swift
-//  swift-example
-//
-//  Created by Brian Corbin on 4/23/24.
-//
-
 import SwiftUI
-import WebKit
 import AuthenticationServices
-import os
+import WebKit
 
-enum CapsuleError: Error {
-    case bridgeError(String)
-    case bridgeTimeoutError
-}
-
-extension CapsuleError: CustomStringConvertible {
-    var description: String {
-        switch self {
-        case .bridgeError(let info):
-            return "The following error happened while the javascript bridge was executing: \(info)"
-        case .bridgeTimeoutError:
-            return "The javascript bridge did not respond in time and the continuation has been cancelled."
-        }
-    }
-}
-
-@available(iOS 16.4, *)
+#if os(iOS)
+@available(iOS 16.4,*)
+@MainActor
 public class CapsuleManager: NSObject, ObservableObject {
-    // MARK: - Public
-    @MainActor @Published public var wallets: [Wallet] = []
-    @MainActor @Published public var sessionState: CapsuleSessionState = .unknown
+    @Published public var wallets: [Wallet] = []
+    @Published public var sessionState: CapsuleSessionState = .unknown
     
     public static let packageVersion = "0.0.3"
     public var environment: CapsuleEnvironment {
@@ -40,143 +17,79 @@ public class CapsuleManager: NSObject, ObservableObject {
     }
     public var apiKey: String
     
-    public var webView: WKWebView = WKWebView(frame: CGRect.zero)
-    
-    
-    // MARK: - Private
     private let passkeysManager: PasskeysManager
-    public private(set) var isCapsuleInitialized: Bool = false
-    private var continuation: CheckedContinuation<Any?, Error>?
-    private var messageQueue: [(String, [Encodable], CheckedContinuation<Any?, Error>)] = []
-    private var isProcessingMessage = false
+    private let capsuleWebView: CapsuleWebView
     
-    // MARK: - Internal
     public init(environment: CapsuleEnvironment, apiKey: String) {
         self.environment = environment
         self.apiKey = apiKey
         self.passkeysManager = PasskeysManager(relyingPartyIdentifier: environment.relyingPartyId)
-        
+        self.capsuleWebView = CapsuleWebView(environment: environment, apiKey: apiKey)
         super.init()
-        webView.configuration.userContentController.add(self, name: "callback")
-        webView.navigationDelegate = self
-        webView.load(URLRequest(url: environment.jsBridgeUrl))
-    }
-    
-    public func initCapsule() {
-        let script = """
-          window.postMessage({
-            messageType: 'Capsule#init',
-            arguments: {
-              environment: '\(environment.name)',
-              apiKey: '\(apiKey)',
-              platform: 'iOS',
-              package: '\(Self.packageVersion)'
-            }
-          });
-        """
-        
-        webView.evaluateJavaScript(script)
-    }
-    
-    @MainActor
-    @discardableResult
-    private func postMessage(method: String, arguments: [Encodable]) async throws -> Any? {
-        return try await withCheckedThrowingContinuation { continuation in
-            messageQueue.append((method, arguments, continuation))
-            processNextMessageIfNeeded()
+        Task {
+            await waitForCapsuleReady()
         }
     }
-
-    private func processNextMessageIfNeeded() {
-        guard !isProcessingMessage, let (method, arguments, _) = messageQueue.first else { return }
-        
-        isProcessingMessage = true
-        let script = """
-          window.postMessage({
-            'messageType': 'Capsule#invokeMethod',
-            'methodName': '\(method)',
-            'arguments': \(arguments)
-          });
-        """
-
-        webView.evaluateJavaScript(script)
-    }
     
-    private func completeCurrentMessage(with result: Result<Any?, Error>) {
-        guard let (_, _, continuation) = messageQueue.first else { return }
-        
-        messageQueue.removeFirst()
-        isProcessingMessage = false
-        
-        switch result {
-        case .success(let value):
-            continuation.resume(returning: value)
-        case .failure(let error):
-            continuation.resume(throwing: error)
-        }
-        
-        processNextMessageIfNeeded()
-    }
-}
-
-// MARK: - WKNavigationDelegate
-
-@available(iOS 16.4, *)
-extension CapsuleManager: WKNavigationDelegate {
-    public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        Task { @MainActor in
-            initCapsule()
-            guard let active = try? await isSessionActive(), active else {
+    private func waitForCapsuleReady() async {
+        let startTime = Date()
+        let maxWaitDuration: TimeInterval = 30.0
+        while !capsuleWebView.isReady && capsuleWebView.initializationError == nil && capsuleWebView.lastError == nil {
+            if Date().timeIntervalSince(startTime) > maxWaitDuration {
                 sessionState = .inactive
                 return
             }
-            guard let loggedIn = try? await isFullyLoggedIn(), loggedIn else {
-                sessionState = .active
-                return
-            }
-            sessionState = .activeLoggedIn
+            try? await Task.sleep(nanoseconds: 100_000_000)
         }
-    }
-}
 
-// MARK: - WKScriptMessageHandler
-
-@available(iOS 16.4, *)
-extension CapsuleManager: WKScriptMessageHandler {
-    public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard let resp = message.body as? [String: Any],
-              let method = resp["method"] as? String else {
-            completeCurrentMessage(with: .failure(CapsuleError.bridgeError("Invalid response format")))
+        if capsuleWebView.initializationError != nil || capsuleWebView.lastError != nil {
+            sessionState = .inactive
             return
         }
 
-        if let error = resp["error"] as? String {
-            completeCurrentMessage(with: .failure(CapsuleError.bridgeError("\(method): \(error)")))
-        } else if resp["error"] != nil {
-            completeCurrentMessage(with: .failure(CapsuleError.bridgeError("\(method): Error occurred, but details are not available")))
-        } else {
-            if (method == "Capsule#init") {
-                isCapsuleInitialized = true
+        if let active = try? await isSessionActive(), active {
+            if let loggedIn = try? await isFullyLoggedIn(), loggedIn {
+                sessionState = .activeLoggedIn
+            } else {
+                sessionState = .active
             }
-            completeCurrentMessage(with: .success(resp["responseData"]))
+        } else {
+            sessionState = .inactive
         }
+    }
+    
+    private func postMessage(method: String, arguments: [Encodable]) async throws -> Any? {
+        return try await capsuleWebView.postMessage(method: method, arguments: arguments)
+    }
+    
+    private func decodeResult<T>(_ result: Any?, expectedType: T.Type, method: String) throws -> T {
+        guard let value = result as? T else {
+            throw CapsuleError.bridgeError("METHOD_ERROR<\(method)>: Invalid result format expected \(T.self), but got \(String(describing: result))")
+        }
+        return value
+    }
+    
+    private func decodeDictionaryResult<T>(_ result: Any?, expectedType: T.Type, method: String, key: String) throws -> T {
+        let dict = try decodeResult(result, expectedType: [String: Any].self, method: method)
+        guard let value = dict[key] as? T else {
+            throw CapsuleError.bridgeError("KEY_ERROR<\(method)-\(key)>: Missing or invalid key result")
+        }
+        return value
     }
 }
 
-// MARK: - Account
-
-@available(iOS 16.4, *)
+@available(iOS 16.4,*)
 extension CapsuleManager {
-    
     public func checkIfUserExists(email: String) async throws -> Bool {
         let result = try await postMessage(method: "checkIfUserExists", arguments: [email])
         return try decodeResult(result, expectedType: Bool.self, method: "checkIfUserExists")
     }
     
     public func createUser(email: String) async throws {
-        try await postMessage(method: "createUser", arguments: [email])
+        _ = try await postMessage(method: "createUser", arguments: [email])
     }
     
+    @available(macOS 13.3, iOS 16.4, *)
     @MainActor
     public func login(authorizationController: AuthorizationController) async throws {
         let getWebChallengeResult = try await postMessage(method: "getWebChallenge", arguments: [])
@@ -192,7 +105,7 @@ extension CapsuleManager {
         let verifyWebChallengeResult = try await postMessage(method: "verifyWebChallenge", arguments: [id, authenticatorData, clientDataJSON, signature])
         let userId = try decodeResult(verifyWebChallengeResult, expectedType: String.self, method: "verifyWebChallenge")
         
-        let _ = try await postMessage(method: "loginV2", arguments: [userId, id, signIntoPasskeyAccountResult.userID.base64URLEncodedString()])
+        _ = try await postMessage(method: "loginV2", arguments: [userId, id, signIntoPasskeyAccountResult.userID.base64URLEncodedString()])
         self.wallets = try await fetchWallets()
         sessionState = .activeLoggedIn
     }
@@ -202,7 +115,6 @@ extension CapsuleManager {
         let resultString = try decodeResult(result, expectedType: String.self, method: "verifyEmail")
         
         let paths = resultString.split(separator: "/")
-        
         guard let lastPath = paths.last,
               let biometricsId = lastPath.split(separator: "?").first else {
             throw CapsuleError.bridgeError("Invalid path format in result")
@@ -211,22 +123,29 @@ extension CapsuleManager {
         return String(biometricsId)
     }
     
+    @available(macOS 13.3, iOS 16.4, *)
     public func generatePasskey(email: String, biometricsId: String, authorizationController: AuthorizationController) async throws {
         var userHandle = Data(count: 32)
-        let _ = userHandle.withUnsafeMutableBytes {
+        _ = userHandle.withUnsafeMutableBytes {
             SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!)
         }
-        
+
         let userHandleEncoded = userHandle.base64URLEncodedString()
         let result = try await passkeysManager.createPasskeyAccount(authorizationController: authorizationController,
                                                                     username: email, userHandle: userHandle)
-        
-        let attestationObjectEncoded = result.rawAttestationObject!.base64URLEncodedString()
-        let clientDataJSONEncoded = result.rawClientDataJSON.base64URLEncodedString()
-        let credentialIDEncoded = result.credentialID.base64URLEncodedString()
-        
-        try await postMessage(method: "generatePasskeyV2",
-                              arguments: [attestationObjectEncoded, clientDataJSONEncoded, credentialIDEncoded, userHandleEncoded, biometricsId])
+
+        guard let rawAttestation = result.rawAttestationObject else {
+            throw CapsuleError.bridgeError("Missing attestation object")
+        }
+        let rawClientData = result.rawClientDataJSON
+        let credID = result.credentialID
+
+        let attestationObjectEncoded = rawAttestation.base64URLEncodedString()
+        let clientDataJSONEncoded = rawClientData.base64URLEncodedString()
+        let credentialIDEncoded = credID.base64URLEncodedString()
+
+        _ = try await postMessage(method: "generatePasskeyV2",
+                                arguments: [attestationObjectEncoded, clientDataJSONEncoded, credentialIDEncoded, userHandleEncoded, biometricsId])
     }
     
     public func setup2FA() async throws -> String {
@@ -235,7 +154,7 @@ extension CapsuleManager {
     }
     
     public func enable2FA() async throws {
-        try await postMessage(method: "enable2FA", arguments: [])
+        _ = try await postMessage(method: "enable2FA", arguments: [])
     }
     
     public func is2FASetup() async throws -> Bool {
@@ -262,9 +181,8 @@ extension CapsuleManager {
         return try decodeResult(result, expectedType: String.self, method: "exportSession")
     }
     
-    @MainActor
     public func logout() async throws {
-        try await postMessage(method: "logout", arguments: [])
+        _ = try await postMessage(method: "logout", arguments: [])
         let dataStore = WKWebsiteDataStore.default()
         let dataTypes = WKWebsiteDataStore.allWebsiteDataTypes()
         let dateFrom = Date(timeIntervalSince1970: 0)
@@ -274,13 +192,11 @@ extension CapsuleManager {
     }
 }
 
-// MARK: - Wallets
-
-@available(iOS 16.4, *)
+@available(iOS 16.4,*)
 extension CapsuleManager {
     @MainActor
     public func createWallet(skipDistributable: Bool) async throws {
-        let _ = try await postMessage(method: "createWallet", arguments: ["EVM", skipDistributable])
+        _ = try await postMessage(method: "createWallet", arguments: ["EVM", skipDistributable])
         self.wallets = try await fetchWallets()
         self.sessionState = .activeLoggedIn
     }
@@ -292,19 +208,16 @@ extension CapsuleManager {
     }
     
     public func distributeNewWalletShare(walletId: String, userShare: String) async throws {
-        try await postMessage(method: "distributeNewWalletShare", arguments: [walletId, userShare])
+        _ = try await postMessage(method: "distributeNewWalletShare", arguments: [walletId, userShare])
     }
     
     public func getEmail() async throws -> String {
         let result = try await postMessage(method: "getEmail", arguments: [])
-        let email = try  decodeResult(result, expectedType: String.self, method: "getEmail")
-        return email
+        return try decodeResult(result, expectedType: String.self, method: "getEmail")
     }
 }
 
-// MARK: - Transactions
-
-@available(iOS 16.4, *)
+@available(iOS 16.4,*)
 extension CapsuleManager {
     public func signMessage(walletId: String, message: String) async throws -> String {
         let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
@@ -313,7 +226,7 @@ extension CapsuleManager {
     
     public func signTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
         let result = try await postMessage(method: "signTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
-        return try decodeDictionaryResult(result, expectedType: String.self, method: "signTransaction",  key: "signature")
+        return try decodeDictionaryResult(result, expectedType: String.self, method: "signTransaction", key: "signature")
     }
     
     public func sendTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
@@ -322,23 +235,17 @@ extension CapsuleManager {
     }
 }
 
-
-// MARK: - Generic Helpers
-
-@available(iOS 16.4, *)
-extension CapsuleManager {
-    func decodeResult<T>(_ result: Any?, expectedType: T.Type, method: String) throws -> T {
-        guard let value = result as? T else {
-            throw CapsuleError.bridgeError("METHOD_ERROR<\(method)>: Invalid result format expected \(T.self), but got \(result)")
-        }
-        return value
-    }
+public enum CapsuleError: Error, CustomStringConvertible {
+    case bridgeError(String)
+    case bridgeTimeoutError
     
-    func decodeDictionaryResult<T>(_ result: Any?, expectedType: T.Type, method: String, key: String) throws -> T {
-        let dict = try decodeResult(result, expectedType: [String: Any].self, method: method)
-        guard let value = dict[key] as? T else {
-            throw CapsuleError.bridgeError("KEY_ERROR<\(method)-\(key)>: Missing or invalid key result")
+    public var description: String {
+        switch self {
+        case .bridgeError(let info):
+            return "The following error happened while the javascript bridge was executing: \(info)"
+        case .bridgeTimeoutError:
+            return "The javascript bridge did not respond in time and the continuation has been cancelled."
         }
-        return value
     }
 }
+#endif
