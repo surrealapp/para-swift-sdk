@@ -65,7 +65,7 @@ struct PhoneAuthView: View {
     @State private var countryCode = "+1"
     @State private var countryFlag = "🇺🇸"
     @State private var countryPattern = "### ### ####"
-    @State private var shouldNavigateToVerifyEmail = false
+    @State private var shouldNavigateToVerifyPhoneView = false
     
     // New states for error handling and loading
     @State private var isLoading = false
@@ -113,10 +113,8 @@ struct PhoneAuthView: View {
                                 self.countryFlag = country.flag
                                 self.countryCode = country.dial_code
                                 self.countryPattern = country.pattern
-//                                self.countryLimit = country.limit
                                 presentCountryCodeSelection = false
                                 searchCountry = ""
-                                print(countryPattern)
                             }
                         }
                         .listStyle(.plain)
@@ -154,22 +152,22 @@ struct PhoneAuthView: View {
                 isLoading = true
                 errorMessage = nil
                 Task {
-//                    do {
-//                        let userExists = try await capsuleManager.checkIfUserExists(email: email)
-//                        if userExists {
-//                            // User already exists, let them proceed to login (or show a message)
-//                            // For now, we just show an error encouraging them to log in instead.
-//                            errorMessage = "User already exists. Please log in with passkey."
-//                            isLoading = false
-//                        } else {
-//                            try await capsuleManager.createUser(email: email)
-//                            isLoading = false
-//                            shouldNavigateToVerifyEmail = true
-//                        }
-//                    } catch {
-//                        errorMessage = "Failed to create user: \(error.localizedDescription)"
-//                        isLoading = false
-//                    }
+                    do {
+                        let userExists = try await capsuleManager.checkIfUserExistsByPhone(phoneNumber: phoneNumber.replacingOccurrences(of: " ", with: ""), countryCode: countryCode)
+                        
+                        if userExists {
+                            errorMessage = "User already exists. Please log in with passkey."
+                            isLoading = false
+                            return
+                        }
+                        
+                        try await capsuleManager.createUserByPhone(phoneNumber: phoneNumber.replacingOccurrences(of: " ", with: ""), countryCode: countryCode)
+                        isLoading = false
+                        shouldNavigateToVerifyPhoneView = true
+                    } catch {
+                        errorMessage = "Failed to create user: \(error.localizedDescription)"
+                        isLoading = false
+                    }
                 }
             } label: {
                 Text("Sign Up")
@@ -177,8 +175,8 @@ struct PhoneAuthView: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(isLoading || phoneNumber.isEmpty)
-            .navigationDestination(isPresented: $shouldNavigateToVerifyEmail) {
-//                VerifyEmailView(email: email)
+            .navigationDestination(isPresented: $shouldNavigateToVerifyPhoneView) {
+                VerifyPhoneView(phoneNumber: phoneNumber.replacingOccurrences(of: " ", with: ""), countryCode: countryCode)
             }
             
             HStack {

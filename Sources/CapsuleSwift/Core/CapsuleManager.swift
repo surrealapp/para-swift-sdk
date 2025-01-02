@@ -85,8 +85,17 @@ extension CapsuleManager {
         return try decodeResult(result, expectedType: Bool.self, method: "checkIfUserExists")
     }
     
+    public func checkIfUserExistsByPhone(phoneNumber: String, countryCode: String) async throws -> Bool {
+        let result = try await postMessage(method: "checkIfUserExistsByPhone", arguments: [phoneNumber, countryCode])
+        return try decodeResult(result, expectedType: Bool.self, method: "checkIfUserExistsByPhone")
+    }
+    
     public func createUser(email: String) async throws {
         _ = try await postMessage(method: "createUser", arguments: [email])
+    }
+    
+    public func createUserByPhone(phoneNumber: String, countryCode: String) async throws {
+        _ = try await postMessage(method: "createUserByPhone", arguments: [phoneNumber, countryCode])
     }
     
     @available(macOS 13.3, iOS 16.4, *)
@@ -123,8 +132,21 @@ extension CapsuleManager {
         return String(biometricsId)
     }
     
+    public func verifyByPhone(verificationCode: String) async throws -> String {
+        let result = try await postMessage(method: "verifyPhone", arguments: [verificationCode])
+        let resultString = try decodeResult(result, expectedType: String.self, method: "verifyPhone")
+        
+        let paths = resultString.split(separator: "/")
+        guard let lastPath = paths.last,
+              let biometricsId = lastPath.split(separator: "?").first else {
+            throw CapsuleError.bridgeError("Invalid path format in result")
+        }
+        
+        return String(biometricsId)
+    }
+    
     @available(macOS 13.3, iOS 16.4, *)
-    public func generatePasskey(email: String, biometricsId: String, authorizationController: AuthorizationController) async throws {
+    public func generatePasskey(identifier: String, biometricsId: String, authorizationController: AuthorizationController) async throws {
         var userHandle = Data(count: 32)
         _ = userHandle.withUnsafeMutableBytes {
             SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!)
@@ -132,7 +154,7 @@ extension CapsuleManager {
 
         let userHandleEncoded = userHandle.base64URLEncodedString()
         let result = try await passkeysManager.createPasskeyAccount(authorizationController: authorizationController,
-                                                                    username: email, userHandle: userHandle)
+                                                                    username: identifier, userHandle: userHandle)
 
         guard let rawAttestation = result.rawAttestationObject else {
             throw CapsuleError.bridgeError("Missing attestation object")

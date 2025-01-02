@@ -1,11 +1,12 @@
 import SwiftUI
 import CapsuleSwift
 
-struct VerifyEmailView: View {
+struct VerifyPhoneView: View {
     @EnvironmentObject var capsule: CapsuleManager
     @EnvironmentObject var appRootManager: AppRootManager
     
-    let email: String
+    let phoneNumber: String
+    let countryCode: String
     
     @State private var code = ""
     @State private var isLoading = false
@@ -16,7 +17,7 @@ struct VerifyEmailView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            Text("A verification code was sent to your email. Enter it below to verify.")
+            Text("A verification code was sent to your phone number. Enter it below to verify.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -53,9 +54,9 @@ struct VerifyEmailView: View {
                 loadingStateText = "Verifying..."
                 Task {
                     do {
-                        let biometricsId = try await capsule.verify(verificationCode: code)
+                        let biometricsId = try await capsule.verifyByPhone(verificationCode: code)
                         loadingStateText = "Generating Passkey..."
-                        try await capsule.generatePasskey(identifier: email, biometricsId: biometricsId, authorizationController: authorizationController)
+                        try await capsule.generatePasskey(identifier: "\(countryCode)\(phoneNumber)", biometricsId: biometricsId, authorizationController: authorizationController)
                         loadingStateText = "Creating Wallet..."
                         try await capsule.createWallet(skipDistributable: false)
                         isLoading = false
@@ -82,7 +83,7 @@ struct VerifyEmailView: View {
             Spacer()
         }
         .padding()
-        .navigationTitle("Verify Email")
+        .navigationTitle("Verify Phone")
     }
 }
 
