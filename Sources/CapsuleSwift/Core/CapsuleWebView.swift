@@ -27,6 +27,11 @@ public class CapsuleWebView: NSObject, ObservableObject {
         self.requestTimeout = requestTimeout
         
         let config = WKWebViewConfiguration()
+        
+        if #available(iOS 17.0, *) {
+            config.preferences.inactiveSchedulingPolicy = .none
+        }
+        
         let userContentController = WKUserContentController()
         config.userContentController = userContentController
         self.webView = WKWebView(frame: .zero, configuration: config)
