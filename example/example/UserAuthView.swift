@@ -13,11 +13,21 @@ struct UserAuthView: View {
             List {
                 // Single link for Email + Passkey Auth
                 Section {
-                    NavigationLink(destination: EmailAuthView().environmentObject(capsuleManager)) {
+                    NavigationLink(destination: EmailAuthView()) {
                         AuthTypeView(
                             image: Image(systemName: "envelope"),
                             title: "Email + Passkey",
                             description: "Use your email to create or sign in with a passkey."
+                        )
+                    }
+                }
+                
+                Section {
+                    NavigationLink(destination: PhoneAuthView()) {
+                        AuthTypeView(
+                            image: Image(systemName: "phone"),
+                            title: "Phone + Passkey",
+                            description: "Use your phone number to create or sign in with a passkey."
                         )
                     }
                 }
