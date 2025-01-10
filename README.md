@@ -95,6 +95,10 @@ In the associated domains section that appears after adding it, you will need to
 This will allow you to use passkeys that have been created on any app that uses the Capsule system, so if your users already have a Capsule wallet they will be able to use it in your app.  
 
 
+### Env File
+
+In order to set your API Key and desired environment in the example app, please copy the file locations at Configs/example into the root level of your project and name it EnvDebug for development, and EnvRelease for production. This is only an example of how to manage your environment variables.
+
 ## Using Capsule Swift
 
   
@@ -112,30 +116,6 @@ CapsuleSwift provides an interface to Capsule services from within iOS applicati
   
 
 To configure the capsule instance, you will need to create an instance of the capsule object as well as the globally available authorizationController environment object. This will be needed in several functions later on. If you need an API Key, please reach out to the Capsule Team.
-
-  
-
-You will also need to add an instance of the CapsuleWebView to your view passing in the instance of Capsule that we just created, and set it to hidden so that it doesn't appear on screen. It is recommended to use a ZStack and set this as the topmost view, which will hide it behind all other views that render on the screen.
-
-  
-
-```swift
-
-struct UserAuthView: View {
-
-@StateObject var capsule = CapsuleSwift.Capsule(environment: CapsuleEnvironment.beta(jsBridgeUrl: nil), apiKey: "<YOUR_API_KEY>")
-
-@Environment(\.authorizationController) private var authorizationController
-
-var body: some View {
-
-ZStack {
-
-CapsuleWebView(viewModel: capsule).hidden()
-
-...
-
-```
 
   
 
