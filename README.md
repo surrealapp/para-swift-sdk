@@ -18,7 +18,7 @@ Your bundle identifier can be found here
 
 <img width="1547" alt="Bundle Identifier" src="https://github.com/capsule-org/swift-sdk/assets/4346395/84827d38-8477-422a-8e66-6c3ac6819095">
 
-**To request an API Key and send us your team and bundle ids, please fill out [this form](https://usecapsule.com/api)**
+**To get an API Key and send us your team and bundle ids, please go to the [developer portal](https://developer.usecapsule.com/)**
 
 ## Installation
 
