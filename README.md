@@ -9,7 +9,8 @@
 
   
 ## Prerequisites
-### Request an API Key & Send us Your Team ID & Bundle ID
+
+### Find your TeamID and Bundle Identifier
 Your team id can be found from [Apple's developer portal](https://developer.apple.com/account/resources/certificates/list) in the top right corner of the Certificates, Identifiers & Profiles section.
 
 <img width="1262" alt="Team ID" src="https://github.com/capsule-org/swift-sdk/assets/4346395/8804c237-5805-49e8-b7ef-845833646261">
@@ -18,7 +19,12 @@ Your bundle identifier can be found here
 
 <img width="1547" alt="Bundle Identifier" src="https://github.com/capsule-org/swift-sdk/assets/4346395/84827d38-8477-422a-8e66-6c3ac6819095">
 
-**To get an API Key and send us your team and bundle ids, please go to the [developer portal](https://developer.usecapsule.com/)**
+### Set up a Capsule Developer Portal Account and Configure Native Passkeys
+To get an API Key and configure your team and bundle ids, please go to the [Developer Portal](https://developer.usecapsule.com/).
+
+Once you've created an API key, please fill out the "Native Passkey Configuration" Section with your App Info described above. Please note that once entered, this information can take up to a day to be reflected by Apple. Ping us if you have any questions or if you would like to check in on the status of this
+
+![image](https://github.com/user-attachments/assets/b04ae526-7aea-4dc0-a854-54499e17e6f5)
 
 ## Installation
 
