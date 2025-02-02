@@ -247,13 +247,18 @@ extension CapsuleManager {
     }
     
     public func signTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
-        let result = try await postMessage(method: "signTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
+        let result = try await postMessage(method: "signTransaction", arguments: [walletId, rlpEncodedTx, chainId])
         return try decodeDictionaryResult(result, expectedType: String.self, method: "signTransaction", key: "signature")
     }
     
     public func sendTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
-        let result = try await postMessage(method: "sendTransaction", arguments: [walletId, rlpEncodedTx.toBase64(), chainId])
+        let result = try await postMessage(method: "sendTransaction", arguments: [walletId, rlpEncodedTx, chainId])
         return try decodeDictionaryResult(result, expectedType: String.self, method: "sendTransaction", key: "signature")
+    }
+    
+    public func rlpEncodeTransaction(transactionb64: String) async throws -> String{
+        let result = try await postMessage(method: "rlpEncodeTransaction", arguments: [transactionb64])
+        return try decodeResult(result, expectedType: String.self, method: "rlpEncodeTransaction")
     }
 }
 

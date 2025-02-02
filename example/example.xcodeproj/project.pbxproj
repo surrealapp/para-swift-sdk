@@ -153,6 +153,8 @@
 				Base,
 			);
 			mainGroup = E8F93B1F2C21EBED006AA3F6;
+			packageReferences = (
+			);
 			productRefGroup = E8F93B292C21EBED006AA3F6 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -341,7 +343,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.capsule.swift-example";
+				PRODUCT_BUNDLE_IDENTIFIER = com.usecapsule.example.swift;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -378,7 +380,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.capsule.swift-example";
+				PRODUCT_BUNDLE_IDENTIFIER = com.usecapsule.example.swift;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
