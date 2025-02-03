@@ -58,34 +58,14 @@ struct WalletView: View {
 //            let balance = try! await web3.eth.getBalance(for: ethAddress)
 //            self.balance = Int(balance)
 //        }
-                
-//        let nonce = String(1, radix: 16)
-//        let gasPrice = String(21000000000, radix: 16)
-//        let gasLimit = String(21000, radix: 16)
-//        let recipient = "c390cC49a32736a58733Cf46bE42f734dD4f53"
-//        let value = String(1000000000000000000, radix: 16)
         
         let transaction = Transaction(to: "0x5bc5c2803A6ef66dEC048B39C6696d70673C507d", value: "1000000000000000000", gasLimit: "21000", maxPriorityFeePerGas: "1", maxFeePerGas: "3", nonce: "0", chainId: "11155111")
         let encodedTransaction = try! JSONEncoder().encode(transaction)
         let b64EncodedTransaction = encodedTransaction.base64EncodedString()
-        
-        
-//        var values: [RLPValue] = []
-//        values.append(.string(nonce))
-//        values.append(.string(gasPrice))
-//        values.append(.string(gasLimit))
-//        values.append(.string(recipient))
-//        values.append(.string(value))
-//        
-//        // 2. RLP-encode the unsigned part
-//        let encoder = RLPEncoder()
-//        let encodedTx = try! encoder.encode(.array(values))
-//        let b64encodedTx = encodedTx.base64EncodedString()
-        
-//        let signatureHex = capsule.signTransaction(capsule.wallets.first!id, encodedTx.base64EncodedString(), chainId)
+
         Task {
-            let rlpEncodedTx = try! await capsule.rlpEncodeTransaction(transactionb64: b64EncodedTransaction)
-            let sigHex = try! await capsule.signTransaction(walletId: capsule.wallets.first!.id, rlpEncodedTx: rlpEncodedTx, chainId: "11155111")
+            try! await paraManager.initEthersSigner(rpcUrl: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8", walletId: paraManager.wallets.first!.id)
+            let sigHex = try! await paraManager.ethersSignTransaction(transactionB64: b64EncodedTransaction, walletId: paraManager.wallets.first!.id)
             print(sigHex)
         }
 //        var transaction2: CodableTransaction = .emptyTransaction
@@ -227,7 +207,7 @@ struct WalletView: View {
                     .buttonStyle(.bordered)
                     
                     Button("Copy Address") {
-                        UIPasteboard.general.string = capsule.wallets.first!.address!
+                        UIPasteboard.general.string = paraManager.wallets.first!.address!
                     }
                     .buttonStyle(.bordered)
                 }

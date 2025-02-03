@@ -259,10 +259,17 @@ extension ParaManager {
         let result = try await postMessage(method: "sendTransaction", arguments: [walletId, rlpEncodedTx, chainId])
         return try decodeDictionaryResult(result, expectedType: String.self, method: "sendTransaction", key: "signature")
     }
+}
+@available(iOS 16.4,*)
+extension ParaManager {
+    public func ethersSignTransaction(transactionB64: String, walletId: String) async throws -> String {
+        let result = try await postMessage(method: "ethersSignTransaction", arguments: [transactionB64, walletId])
+        return try decodeResult(result, expectedType: String.self, method: "ethersSignTransaction")
+    }
     
-    public func rlpEncodeTransaction(transactionb64: String) async throws -> String{
-        let result = try await postMessage(method: "rlpEncodeTransaction", arguments: [transactionb64])
-        return try decodeResult(result, expectedType: String.self, method: "rlpEncodeTransaction")
+    public func initEthersSigner(rpcUrl: String, walletId: String) async throws -> Bool {
+        let result = try await postMessage(method: "initEthersSigner", arguments: [walletId, rpcUrl])
+        return try decodeResult(result, expectedType: Bool.self, method: "initEthersSigner")
     }
 }
 
