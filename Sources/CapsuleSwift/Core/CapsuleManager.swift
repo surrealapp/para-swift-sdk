@@ -9,7 +9,11 @@ public class CapsuleManager: NSObject, ObservableObject {
     @Published public var wallets: [Wallet] = []
     @Published public var sessionState: CapsuleSessionState = .unknown
     
-    public static let packageVersion = "0.0.5"
+    public var isReady: Bool {
+        return capsuleWebView.isReady
+    }
+    
+    public static let packageVersion = "0.0.6-dev.1"
     public var environment: CapsuleEnvironment {
         didSet {
             self.passkeysManager.relyingPartyIdentifier = environment.relyingPartyId
