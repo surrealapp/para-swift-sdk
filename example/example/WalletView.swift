@@ -1,8 +1,8 @@
 import SwiftUI
-import CapsuleSwift
+import ParaSwift
 
 struct WalletView: View {
-    @EnvironmentObject var capsule: CapsuleManager
+    @EnvironmentObject var paraManager: ParaManager
     @EnvironmentObject var appRootManager: AppRootManager
     
     @State private var messageToSign = ""
@@ -18,7 +18,7 @@ struct WalletView: View {
                 .font(.title2)
                 .bold()
             
-            if let firstWallet = capsule.wallets.first {
+            if let firstWallet = paraManager.wallets.first {
                 // Unwrap address safely
                 let address = firstWallet.address ?? "No Address Available"
                 
@@ -55,7 +55,7 @@ struct WalletView: View {
                             guard let base64Message = messageBytes?.base64EncodedString() else {
                                 throw CapsuleError.bridgeError("Failed to encode message.")
                             }
-                            let messageSignature = try await capsule.signMessage(walletId: firstWallet.id, message: base64Message)
+                            let messageSignature = try await paraManager.signMessage(walletId: firstWallet.id, message: base64Message)
                             result = "Message Signature: \(messageSignature)"
                             isSigning = false
                         } catch {
@@ -79,7 +79,7 @@ struct WalletView: View {
                         errorMessage = nil
                         Task {
                             do {
-                                let active = try await capsule.isSessionActive()
+                                let active = try await paraManager.isSessionActive()
                                 result = "Session Active: \(active)"
                                 isFetching = false
                             } catch {
@@ -95,7 +95,7 @@ struct WalletView: View {
                         errorMessage = nil
                         Task {
                             do {
-                                let wallets = try await capsule.fetchWallets()
+                                let wallets = try await paraManager.fetchWallets()
                                 let addresses = wallets.map { $0.address ?? "No Address" }
                                 result = "Wallet addresses: \(addresses.joined(separator: ", "))"
                                 isFetching = false
@@ -119,7 +119,7 @@ struct WalletView: View {
                     Task {
                         errorMessage = nil
                         do {
-                            try await capsule.logout()
+                            try await paraManager.logout()
                             appRootManager.currentRoot = .authentication
                         } catch {
                             errorMessage = "Failed to logout: \(error.localizedDescription)"
@@ -150,7 +150,7 @@ struct WalletView: View {
                     errorMessage = nil
                     Task {
                         do {
-                            try await capsule.createWallet(skipDistributable: false)
+                            try await paraManager.createWallet(skipDistributable: false)
                             creatingWallet = false
                         } catch {
                             creatingWallet = false

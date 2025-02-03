@@ -5,13 +5,13 @@ import os
 #if os(iOS)
 @available(iOS 16.4,*)
 @MainActor
-public class CapsuleWebView: NSObject, ObservableObject {
+public class ParaWebView: NSObject, ObservableObject {
     
     @Published public private(set) var isReady: Bool = false
     @Published public var initializationError: Error?
     @Published public var lastError: Error?
     
-    public var environment: CapsuleEnvironment
+    public var environment: ParaEnvironment
     public var apiKey: String
     public static let packageVersion = "0.0.3"
     
@@ -21,7 +21,7 @@ public class CapsuleWebView: NSObject, ObservableObject {
     private var pendingRequests: [String: (continuation: CheckedContinuation<Any?, Error>, timeoutTask: Task<Void, Never>?)] = [:]
     private var isCapsuleInitialized = false
     
-    public init(environment: CapsuleEnvironment, apiKey: String, requestTimeout: TimeInterval = 30.0) {
+    public init(environment: ParaEnvironment, apiKey: String, requestTimeout: TimeInterval = 30.0) {
         self.environment = environment
         self.apiKey = apiKey
         self.requestTimeout = requestTimeout
@@ -173,7 +173,7 @@ public class CapsuleWebView: NSObject, ObservableObject {
 }
 
 @available(iOS 16.4,*)
-extension CapsuleWebView: WKNavigationDelegate {
+extension ParaWebView: WKNavigationDelegate {
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         initCapsule()
     }
@@ -188,7 +188,7 @@ extension CapsuleWebView: WKNavigationDelegate {
 }
 
 @available(iOS 16.4,*)
-extension CapsuleWebView: WKScriptMessageHandler {
+extension ParaWebView: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "callback" else { return }
         guard let resp = message.body as? [String: Any] else {

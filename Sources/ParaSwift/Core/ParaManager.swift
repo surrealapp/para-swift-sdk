@@ -5,12 +5,12 @@ import WebKit
 #if os(iOS)
 @available(iOS 16.4,*)
 @MainActor
-public class CapsuleManager: NSObject, ObservableObject {
+public class ParaManager: NSObject, ObservableObject {
     @Published public var wallets: [Wallet] = []
-    @Published public var sessionState: CapsuleSessionState = .unknown
+    @Published public var sessionState: ParaSessionState = .unknown
     
     public static let packageVersion = "0.0.5"
-    public var environment: CapsuleEnvironment {
+    public var environment: ParaEnvironment {
         didSet {
             self.passkeysManager.relyingPartyIdentifier = environment.relyingPartyId
         }
@@ -18,13 +18,13 @@ public class CapsuleManager: NSObject, ObservableObject {
     public var apiKey: String
     
     private let passkeysManager: PasskeysManager
-    private let capsuleWebView: CapsuleWebView
+    private let capsuleWebView: ParaWebView
     
-    public init(environment: CapsuleEnvironment, apiKey: String) {
+    public init(environment: ParaEnvironment, apiKey: String) {
         self.environment = environment
         self.apiKey = apiKey
         self.passkeysManager = PasskeysManager(relyingPartyIdentifier: environment.relyingPartyId)
-        self.capsuleWebView = CapsuleWebView(environment: environment, apiKey: apiKey)
+        self.capsuleWebView = ParaWebView(environment: environment, apiKey: apiKey)
         super.init()
         Task {
             await waitForCapsuleReady()
@@ -79,7 +79,7 @@ public class CapsuleManager: NSObject, ObservableObject {
 }
 
 @available(iOS 16.4,*)
-extension CapsuleManager {
+extension ParaManager {
     public func checkIfUserExists(email: String) async throws -> Bool {
         let result = try await postMessage(method: "checkIfUserExists", arguments: [email])
         return try decodeResult(result, expectedType: Bool.self, method: "checkIfUserExists")
@@ -215,7 +215,7 @@ extension CapsuleManager {
 }
 
 @available(iOS 16.4,*)
-extension CapsuleManager {
+extension ParaManager {
     @MainActor
     public func createWallet(skipDistributable: Bool) async throws {
         _ = try await postMessage(method: "createWallet", arguments: ["EVM", skipDistributable])
@@ -240,7 +240,7 @@ extension CapsuleManager {
 }
 
 @available(iOS 16.4,*)
-extension CapsuleManager {
+extension ParaManager {
     public func signMessage(walletId: String, message: String) async throws -> String {
         let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
         return try decodeDictionaryResult(result, expectedType: String.self, method: "signMessage", key: "signature")

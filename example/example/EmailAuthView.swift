@@ -1,8 +1,8 @@
 import SwiftUI
-import CapsuleSwift
+import ParaSwift
 
 struct EmailAuthView: View {
-    @EnvironmentObject var capsuleManager: CapsuleManager
+    @EnvironmentObject var paraManager: ParaManager
     @EnvironmentObject var appRootManager: AppRootManager
 
     @State private var email = ""
@@ -47,14 +47,14 @@ struct EmailAuthView: View {
                 errorMessage = nil
                 Task {
                     do {
-                        let userExists = try await capsuleManager.checkIfUserExists(email: email)
+                        let userExists = try await paraManager.checkIfUserExists(email: email)
                         if userExists {
                             // User already exists, let them proceed to login (or show a message)
                             // For now, we just show an error encouraging them to log in instead.
                             errorMessage = "User already exists. Please log in with passkey."
                             isLoading = false
                         } else {
-                            try await capsuleManager.createUser(email: email)
+                            try await paraManager.createUser(email: email)
                             isLoading = false
                             shouldNavigateToVerifyEmail = true
                         }
@@ -72,7 +72,7 @@ struct EmailAuthView: View {
             .padding(.horizontal)
             .navigationDestination(isPresented: $shouldNavigateToVerifyEmail) {
                 VerifyEmailView(email: email)
-                    .environmentObject(capsuleManager)
+                    .environmentObject(paraManager)
                     .environmentObject(appRootManager)
             }
             
@@ -84,7 +84,7 @@ struct EmailAuthView: View {
             
             Button {
                 Task.init {
-                    try await capsuleManager.login(authorizationController: authorizationController)
+                    try await paraManager.login(authorizationController: authorizationController)
                     appRootManager.currentRoot = .home
                 }
             } label: {
