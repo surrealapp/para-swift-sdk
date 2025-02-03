@@ -53,7 +53,7 @@ struct WalletView: View {
                         do {
                             let messageBytes = messageToSign.data(using: .utf8)
                             guard let base64Message = messageBytes?.base64EncodedString() else {
-                                throw CapsuleError.bridgeError("Failed to encode message.")
+                                throw ParaError.bridgeError("Failed to encode message.")
                             }
                             let messageSignature = try await paraManager.signMessage(walletId: firstWallet.id, message: base64Message)
                             result = "Message Signature: \(messageSignature)"

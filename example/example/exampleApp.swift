@@ -7,11 +7,11 @@ struct exampleApp: App {
     @StateObject private var appRootManager = AppRootManager()
     
 init() {
-    let environmentString = Bundle.main.object(forInfoDictionaryKey: "CAPSULE_ENVIRONMENT") as? String ?? "beta"
+    let environmentString = Bundle.main.object(forInfoDictionaryKey: "PARA_ENVIRONMENT") as? String ?? "beta"
     
     let environment: ParaEnvironment = environmentString == "sandbox" ? .sandbox : .beta
     
-    let apiKey = Bundle.main.object(forInfoDictionaryKey: "CAPSULE_API_KEY") as! String
+    let apiKey = Bundle.main.object(forInfoDictionaryKey: "PARA_API_KEY") as! String
     
     _paraManager = StateObject(wrappedValue: ParaManager(environment: environment, apiKey: apiKey))
 }

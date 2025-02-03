@@ -3,8 +3,8 @@ import os
 
 @available(macOS 11.0, iOS 14.0, *)
 public extension Logger {
-    static let authorization = Logger(subsystem: "Capsule Swift", category: "Passkeys Manager")
-    static let capsule = Logger(subsystem: "Capsule Swift", category: "Capsule")
+    static let authorization = Logger(subsystem: "Para Swift", category: "Passkeys Manager")
+    static let capsule = Logger(subsystem: "Para Swift", category: "Para")
 }
 
 extension Data {
