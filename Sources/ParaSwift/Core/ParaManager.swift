@@ -5,16 +5,16 @@ import WebKit
 #if os(iOS)
 @available(iOS 16.4,*)
 @MainActor
-public class CapsuleManager: NSObject, ObservableObject {
+public class ParaManager: NSObject, ObservableObject {
     @Published public var wallets: [Wallet] = []
-    @Published public var sessionState: CapsuleSessionState = .unknown
+    @Published public var sessionState: ParaSessionState = .unknown
     
     public var isReady: Bool {
-        return capsuleWebView.isReady
+        return paraWebView.isReady
     }
     
     public static let packageVersion = "0.0.6-dev.1"
-    public var environment: CapsuleEnvironment {
+    public var environment: ParaEnvironment {
         didSet {
             self.passkeysManager.relyingPartyIdentifier = environment.relyingPartyId
         }
@@ -22,23 +22,23 @@ public class CapsuleManager: NSObject, ObservableObject {
     public var apiKey: String
     
     private let passkeysManager: PasskeysManager
-    private let capsuleWebView: CapsuleWebView
+    private let paraWebView: ParaWebView
     
-    public init(environment: CapsuleEnvironment, apiKey: String) {
+    public init(environment: ParaEnvironment, apiKey: String) {
         self.environment = environment
         self.apiKey = apiKey
         self.passkeysManager = PasskeysManager(relyingPartyIdentifier: environment.relyingPartyId)
-        self.capsuleWebView = CapsuleWebView(environment: environment, apiKey: apiKey)
+        self.paraWebView = ParaWebView(environment: environment, apiKey: apiKey)
         super.init()
         Task {
-            await waitForCapsuleReady()
+            await waitForParaReady()
         }
     }
     
-    private func waitForCapsuleReady() async {
+    private func waitForParaReady() async {
         let startTime = Date()
         let maxWaitDuration: TimeInterval = 30.0
-        while !capsuleWebView.isReady && capsuleWebView.initializationError == nil && capsuleWebView.lastError == nil {
+        while !paraWebView.isReady && paraWebView.initializationError == nil && paraWebView.lastError == nil {
             if Date().timeIntervalSince(startTime) > maxWaitDuration {
                 sessionState = .inactive
                 return
@@ -46,7 +46,7 @@ public class CapsuleManager: NSObject, ObservableObject {
             try? await Task.sleep(nanoseconds: 100_000_000)
         }
 
-        if capsuleWebView.initializationError != nil || capsuleWebView.lastError != nil {
+        if paraWebView.initializationError != nil || paraWebView.lastError != nil {
             sessionState = .inactive
             return
         }
@@ -63,12 +63,12 @@ public class CapsuleManager: NSObject, ObservableObject {
     }
     
     private func postMessage(method: String, arguments: [Encodable]) async throws -> Any? {
-        return try await capsuleWebView.postMessage(method: method, arguments: arguments)
+        return try await paraWebView.postMessage(method: method, arguments: arguments)
     }
     
     private func decodeResult<T>(_ result: Any?, expectedType: T.Type, method: String) throws -> T {
         guard let value = result as? T else {
-            throw CapsuleError.bridgeError("METHOD_ERROR<\(method)>: Invalid result format expected \(T.self), but got \(String(describing: result))")
+            throw ParaError.bridgeError("METHOD_ERROR<\(method)>: Invalid result format expected \(T.self), but got \(String(describing: result))")
         }
         return value
     }
@@ -76,14 +76,14 @@ public class CapsuleManager: NSObject, ObservableObject {
     private func decodeDictionaryResult<T>(_ result: Any?, expectedType: T.Type, method: String, key: String) throws -> T {
         let dict = try decodeResult(result, expectedType: [String: Any].self, method: method)
         guard let value = dict[key] as? T else {
-            throw CapsuleError.bridgeError("KEY_ERROR<\(method)-\(key)>: Missing or invalid key result")
+            throw ParaError.bridgeError("KEY_ERROR<\(method)-\(key)>: Missing or invalid key result")
         }
         return value
     }
 }
 
 @available(iOS 16.4,*)
-extension CapsuleManager {
+extension ParaManager {
     public func checkIfUserExists(email: String) async throws -> Bool {
         let result = try await postMessage(method: "checkIfUserExists", arguments: [email])
         return try decodeResult(result, expectedType: Bool.self, method: "checkIfUserExists")
@@ -130,7 +130,7 @@ extension CapsuleManager {
         let paths = resultString.split(separator: "/")
         guard let lastPath = paths.last,
               let biometricsId = lastPath.split(separator: "?").first else {
-            throw CapsuleError.bridgeError("Invalid path format in result")
+            throw ParaError.bridgeError("Invalid path format in result")
         }
         
         return String(biometricsId)
@@ -143,7 +143,7 @@ extension CapsuleManager {
         let paths = resultString.split(separator: "/")
         guard let lastPath = paths.last,
               let biometricsId = lastPath.split(separator: "?").first else {
-            throw CapsuleError.bridgeError("Invalid path format in result")
+            throw ParaError.bridgeError("Invalid path format in result")
         }
         
         return String(biometricsId)
@@ -161,7 +161,7 @@ extension CapsuleManager {
                                                                     username: identifier, userHandle: userHandle)
 
         guard let rawAttestation = result.rawAttestationObject else {
-            throw CapsuleError.bridgeError("Missing attestation object")
+            throw ParaError.bridgeError("Missing attestation object")
         }
         let rawClientData = result.rawClientDataJSON
         let credID = result.credentialID
@@ -219,7 +219,7 @@ extension CapsuleManager {
 }
 
 @available(iOS 16.4,*)
-extension CapsuleManager {
+extension ParaManager {
     @MainActor
     public func createWallet(skipDistributable: Bool) async throws {
         _ = try await postMessage(method: "createWallet", arguments: ["EVM", skipDistributable])
@@ -244,7 +244,7 @@ extension CapsuleManager {
 }
 
 @available(iOS 16.4,*)
-extension CapsuleManager {
+extension ParaManager {
     public func signMessage(walletId: String, message: String) async throws -> String {
         let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
         return try decodeDictionaryResult(result, expectedType: String.self, method: "signMessage", key: "signature")
@@ -266,7 +266,7 @@ extension CapsuleManager {
     }
 }
 
-public enum CapsuleError: Error, CustomStringConvertible {
+public enum ParaError: Error, CustomStringConvertible {
     case bridgeError(String)
     case bridgeTimeoutError
     

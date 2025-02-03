@@ -1,19 +1,19 @@
 import SwiftUI
-import CapsuleSwift
+import ParaSwift
 
 @main
 struct exampleApp: App {
-    @StateObject private var capsuleManager: CapsuleManager
+    @StateObject private var paraManager: ParaManager
     @StateObject private var appRootManager = AppRootManager()
     
 init() {
-    let environmentString = Bundle.main.object(forInfoDictionaryKey: "CAPSULE_ENVIRONMENT") as? String ?? "beta"
+    let environmentString = Bundle.main.object(forInfoDictionaryKey: "PARA_ENVIRONMENT") as? String ?? "beta"
     
-    let environment: CapsuleEnvironment = environmentString == "sandbox" ? .sandbox : .beta
+    let environment: ParaEnvironment = environmentString == "sandbox" ? .sandbox : .beta
     
-    let apiKey = Bundle.main.object(forInfoDictionaryKey: "CAPSULE_API_KEY") as! String
+    let apiKey = Bundle.main.object(forInfoDictionaryKey: "PARA_API_KEY") as! String
     
-    _capsuleManager = StateObject(wrappedValue: CapsuleManager(environment: environment, apiKey: apiKey))
+    _paraManager = StateObject(wrappedValue: ParaManager(environment: environment, apiKey: apiKey))
 }
     
     var body: some Scene {
@@ -21,11 +21,11 @@ init() {
             switch appRootManager.currentRoot {
             case .authentication:
                 UserAuthView()
-                    .environmentObject(capsuleManager)
+                    .environmentObject(paraManager)
                     .environmentObject(appRootManager)
             case .home:
                 WalletView()
-                    .environmentObject(capsuleManager)
+                    .environmentObject(paraManager)
                     .environmentObject(appRootManager)
             }
         }

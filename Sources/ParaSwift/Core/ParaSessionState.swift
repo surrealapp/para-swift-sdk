@@ -1,6 +1,6 @@
 import Foundation
 
-public enum CapsuleSessionState: Int {
+public enum ParaSessionState: Int {
     case unknown
     case inactive
     case active

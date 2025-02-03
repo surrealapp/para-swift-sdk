@@ -1,6 +1,6 @@
 import Foundation
 
-public enum CapsuleEnvironment: Hashable {
+public enum ParaEnvironment: Hashable {
     case dev(relyingPartyId: String, jsBridgeUrl: URL?)
     case sandbox
     case beta

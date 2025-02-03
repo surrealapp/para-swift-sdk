@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import CapsuleSwift
+import ParaSwift
 import Combine
 
 extension Bundle {
@@ -58,7 +58,7 @@ func applyPatternOnNumbers(_ stringvar: inout String, pattern: String, replaceme
 }
 
 struct PhoneAuthView: View {
-    @EnvironmentObject var capsuleManager: CapsuleManager
+    @EnvironmentObject var paraManager: ParaManager
     @EnvironmentObject var appRootManager: AppRootManager
 
     @State private var phoneNumber = ""
@@ -153,7 +153,7 @@ struct PhoneAuthView: View {
                 errorMessage = nil
                 Task {
                     do {
-                        let userExists = try await capsuleManager.checkIfUserExistsByPhone(phoneNumber: phoneNumber.replacingOccurrences(of: " ", with: ""), countryCode: countryCode)
+                        let userExists = try await paraManager.checkIfUserExistsByPhone(phoneNumber: phoneNumber.replacingOccurrences(of: " ", with: ""), countryCode: countryCode)
                         
                         if userExists {
                             errorMessage = "User already exists. Please log in with passkey."
@@ -161,7 +161,7 @@ struct PhoneAuthView: View {
                             return
                         }
                         
-                        try await capsuleManager.createUserByPhone(phoneNumber: phoneNumber.replacingOccurrences(of: " ", with: ""), countryCode: countryCode)
+                        try await paraManager.createUserByPhone(phoneNumber: phoneNumber.replacingOccurrences(of: " ", with: ""), countryCode: countryCode)
                         isLoading = false
                         shouldNavigateToVerifyPhoneView = true
                     } catch {
@@ -187,7 +187,7 @@ struct PhoneAuthView: View {
             
             Button {
                 Task.init {
-                    try await capsuleManager.login(authorizationController: authorizationController)
+                    try await paraManager.login(authorizationController: authorizationController)
                     appRootManager.currentRoot = .home
                 }
             } label: {

@@ -1,8 +1,8 @@
 import SwiftUI
-import CapsuleSwift
+import ParaSwift
 
 struct VerifyPhoneView: View {
-    @EnvironmentObject var capsule: CapsuleManager
+    @EnvironmentObject var paraManager: ParaManager
     @EnvironmentObject var appRootManager: AppRootManager
     
     let phoneNumber: String
@@ -54,11 +54,11 @@ struct VerifyPhoneView: View {
                 loadingStateText = "Verifying..."
                 Task {
                     do {
-                        let biometricsId = try await capsule.verifyByPhone(verificationCode: code)
+                        let biometricsId = try await paraManager.verifyByPhone(verificationCode: code)
                         loadingStateText = "Generating Passkey..."
-                        try await capsule.generatePasskey(identifier: "\(countryCode)\(phoneNumber)", biometricsId: biometricsId, authorizationController: authorizationController)
+                        try await paraManager.generatePasskey(identifier: "\(countryCode)\(phoneNumber)", biometricsId: biometricsId, authorizationController: authorizationController)
                         loadingStateText = "Creating Wallet..."
-                        try await capsule.createWallet(skipDistributable: false)
+                        try await paraManager.createWallet(skipDistributable: false)
                         isLoading = false
                         appRootManager.currentRoot = .home
                     } catch {
