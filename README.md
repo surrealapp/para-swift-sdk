@@ -19,8 +19,8 @@ Your bundle identifier can be found here
 
 <img width="1547" alt="Bundle Identifier" src="https://github.com/capsule-org/swift-sdk/assets/4346395/84827d38-8477-422a-8e66-6c3ac6819095">
 
-### Set up a Capsule Developer Portal Account and Configure Native Passkeys
-To get an API Key and configure your team and bundle ids, please go to the [Developer Portal](https://developer.usecapsule.com/).
+### Set up a Para Developer Portal Account and Configure Native Passkeys
+To get an API Key and configure your team and bundle ids, please go to the [Developer Portal](https://developer.getpara.com/).
 
 Once you've created an API key, please fill out the "Native Passkey Configuration" Section with your App Info described above. Please note that once entered, this information can take up to a day to be reflected by Apple. Ping us if you have any questions or if you would like to check in on the status of this
 
@@ -46,7 +46,7 @@ Once you have your Swift package set up, adding ParaSwift as a dependency is as 
 
 dependencies: [
 
-.package(url: "https://github.com/capsule-org/swift-sdk.git", .upToNextMajor(from: "0.0.1"))
+.package(url: "https://github.com/getpara/swift-sdk.git", .upToNextMajor(from: "1.0.0"))
 
 ]
 
@@ -139,7 +139,7 @@ Button("Sign Up") {
 
 Task.init {
 
-let userExists = try! await capsule.checkIfUserExists(email: email)
+let userExists = try! await paraManager.checkIfUserExists(email: email)
 
 if userExists {
 
@@ -147,7 +147,7 @@ return
 
 }
 
-try! await capsule.createUser(email: email)
+try! await paraManager.createUser(email: email)
 
 ...
 
@@ -177,11 +177,11 @@ Button("Verify") {
 
 Task.init {
 
-let biometricsId = try! await capsule.verify(verificationCode: code)
+let biometricsId = try! await paraManager.verify(verificationCode: code)
 
-try! await capsule.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
+try! await paraManager.generatePasskey(email: email, biometricsId: biometricsId, authorizationController: authorizationController)
 
-try! await capsule.createWallet(skipDistributable: false)
+try! await paraManager.createWallet(skipDistributable: false)
 
 }
 
@@ -191,7 +191,7 @@ try! await capsule.createWallet(skipDistributable: false)
 
   
 
-After the wallet has been created, it will be set in the Capsule object as a Published var.
+After the wallet has been created, it will be set in the ParaManager object as a Published var.
 
   
 
@@ -199,7 +199,7 @@ After the wallet has been created, it will be set in the Capsule object as a Pub
 
   
 
-To sign a message, all you need to do is pass in the id of the wallet you would like to use which can be obtained from the capsule.wallet property, and the text that you would like to sign. This will produce a messageSignature.
+To sign a message, all you need to do is pass in the id of the wallet you would like to use which can be obtained from the paraManager.wallet property, and the text that you would like to sign. This will produce a messageSignature.
 
   
 
@@ -209,7 +209,7 @@ Button("Sign Message") {
 
 Task.init {
 
-let messageSignature = try! await capsule.signMessage(walletId: wallet.id, message: "Some message to sign")
+let messageSignature = try! await paraManager.signMessage(walletId: wallet.id, message: "Some message to sign")
 
 ...
 
