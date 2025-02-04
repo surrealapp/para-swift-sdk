@@ -5,13 +5,13 @@ import os
 #if os(iOS)
 @available(iOS 16.4,*)
 @MainActor
-public class CapsuleWebView: NSObject, ObservableObject {
+public class ParaWebView: NSObject, ObservableObject {
     
     @Published public private(set) var isReady: Bool = false
     @Published public var initializationError: Error?
     @Published public var lastError: Error?
     
-    public var environment: CapsuleEnvironment
+    public var environment: ParaEnvironment
     public var apiKey: String
     public static let packageVersion = "0.0.3"
     
@@ -19,9 +19,9 @@ public class CapsuleWebView: NSObject, ObservableObject {
     private let requestTimeout: TimeInterval
     
     private var pendingRequests: [String: (continuation: CheckedContinuation<Any?, Error>, timeoutTask: Task<Void, Never>?)] = [:]
-    private var isCapsuleInitialized = false
+    private var isParaInitialized = false
     
-    public init(environment: CapsuleEnvironment, apiKey: String, requestTimeout: TimeInterval = 30.0) {
+    public init(environment: ParaEnvironment, apiKey: String, requestTimeout: TimeInterval = 30.0) {
         self.environment = environment
         self.apiKey = apiKey
         self.requestTimeout = requestTimeout
@@ -49,7 +49,7 @@ public class CapsuleWebView: NSObject, ObservableObject {
     @discardableResult
     public func postMessage(method: String, arguments: [Encodable]) async throws -> Any? {
         guard isReady else {
-            throw CapsuleWebViewError.webViewNotReady
+            throw ParaWebViewError.webViewNotReady
         }
         
         return try await withCheckedThrowingContinuation { continuation in
@@ -60,7 +60,7 @@ public class CapsuleWebView: NSObject, ObservableObject {
                 let data = try JSONEncoder().encode(arguments.map { AnyEncodable($0) })
                 encodedArgs = try JSONSerialization.jsonObject(with: data, options: [])
             } catch {
-                continuation.resume(throwing: CapsuleWebViewError.invalidArguments("Failed to encode arguments"))
+                continuation.resume(throwing: ParaWebViewError.invalidArguments("Failed to encode arguments"))
                 return
             }
             
@@ -73,7 +73,7 @@ public class CapsuleWebView: NSObject, ObservableObject {
             
             guard let jsonData = try? JSONSerialization.data(withJSONObject: message, options: []),
                   let jsonString = String(data: jsonData, encoding: .utf8) else {
-                continuation.resume(throwing: CapsuleWebViewError.invalidArguments("Unable to serialize message"))
+                continuation.resume(throwing: ParaWebViewError.invalidArguments("Unable to serialize message"))
                 return
             }
             
@@ -88,7 +88,7 @@ public class CapsuleWebView: NSObject, ObservableObject {
                 
                 guard let self = self else { return }
                 if let entry = self.pendingRequests.removeValue(forKey: requestId) {
-                    entry.continuation.resume(throwing: CapsuleWebViewError.requestTimeout)
+                    entry.continuation.resume(throwing: ParaWebViewError.requestTimeout)
                 }
             }
             
@@ -110,7 +110,7 @@ public class CapsuleWebView: NSObject, ObservableObject {
         webView.load(request)
     }
     
-    private func initCapsule() {
+    private func initPara() {
         let args: [String: String] = [
             "environment": environment.name,
             "apiKey": apiKey,
@@ -120,7 +120,7 @@ public class CapsuleWebView: NSObject, ObservableObject {
         
         guard let jsonData = try? JSONSerialization.data(withJSONObject: args, options: []),
               let jsonString = String(data: jsonData, encoding: .utf8) else {
-            lastError = CapsuleWebViewError.invalidArguments("Failed to encode init arguments")
+            lastError = ParaWebViewError.invalidArguments("Failed to encode init arguments")
             return
         }
         
@@ -140,30 +140,30 @@ public class CapsuleWebView: NSObject, ObservableObject {
     
     private func handleCallback(response: [String: Any]) {
         guard let method = response["method"] as? String else {
-            lastError = CapsuleWebViewError.bridgeError("Invalid response: missing 'method'")
+            lastError = ParaWebViewError.bridgeError("Invalid response: missing 'method'")
             return
         }
         
         if method == "Capsule#init" && response["requestId"] == nil {
-            self.isCapsuleInitialized = true
+            self.isParaInitialized = true
             self.isReady = true
             return
         }
         
         guard let requestId = response["requestId"] as? String else {
-            lastError = CapsuleWebViewError.bridgeError("Invalid response: missing 'requestId' for \(method)")
+            lastError = ParaWebViewError.bridgeError("Invalid response: missing 'requestId' for \(method)")
             return
         }
         
         guard let entry = pendingRequests.removeValue(forKey: requestId) else {
-            lastError = CapsuleWebViewError.bridgeError("Received response for unknown requestId: \(requestId)")
+            lastError = ParaWebViewError.bridgeError("Received response for unknown requestId: \(requestId)")
             return
         }
         
         entry.timeoutTask?.cancel()
         
         if let errorMessage = response["error"] as? String {
-            entry.continuation.resume(throwing: CapsuleWebViewError.bridgeError(errorMessage))
+            entry.continuation.resume(throwing: ParaWebViewError.bridgeError(errorMessage))
             return
         }
         
@@ -173,9 +173,9 @@ public class CapsuleWebView: NSObject, ObservableObject {
 }
 
 @available(iOS 16.4,*)
-extension CapsuleWebView: WKNavigationDelegate {
+extension ParaWebView: WKNavigationDelegate {
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        initCapsule()
+        initPara()
     }
     
     public func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -188,11 +188,11 @@ extension CapsuleWebView: WKNavigationDelegate {
 }
 
 @available(iOS 16.4,*)
-extension CapsuleWebView: WKScriptMessageHandler {
+extension ParaWebView: WKScriptMessageHandler {
     public func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "callback" else { return }
         guard let resp = message.body as? [String: Any] else {
-            lastError = CapsuleWebViewError.bridgeError("Invalid JS callback payload")
+            lastError = ParaWebViewError.bridgeError("Invalid JS callback payload")
             return
         }
         handleCallback(response: resp)
@@ -200,7 +200,7 @@ extension CapsuleWebView: WKScriptMessageHandler {
 }
 
 @available(iOS 16.4,*)
-enum CapsuleWebViewError: Error, CustomStringConvertible {
+enum ParaWebViewError: Error, CustomStringConvertible {
     case webViewNotReady
     case invalidArguments(String)
     case requestTimeout

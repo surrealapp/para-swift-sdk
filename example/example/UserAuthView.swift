@@ -1,12 +1,12 @@
 import SwiftUI
-import CapsuleSwift
+import ParaSwift
 
 enum NavigationDestination {
     case verifyEmail, wallet
 }
 
 struct UserAuthView: View {
-    @EnvironmentObject var capsuleManager: CapsuleManager
+    @EnvironmentObject var paraManager: ParaManager
     
     var body: some View {
         NavigationStack {

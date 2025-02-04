@@ -1,5 +1,5 @@
 
-# Capsule Swift SDK
+# Para Swift SDK
 
   
 
@@ -38,7 +38,7 @@ The [Swift Package Manager](https://swift.org/package-manager/) is a tool for au
 
   
 
-Once you have your Swift package set up, adding CapsuleSwift as a dependency is as easy as adding it to the `dependencies` value of your `Package.swift` or the Package list in Xcode.
+Once you have your Swift package set up, adding ParaSwift as a dependency is as easy as adding it to the `dependencies` value of your `Package.swift` or the Package list in Xcode.
 
   
 
@@ -54,13 +54,13 @@ dependencies: [
 
   
 
-Normally you'll want to depend on the `CapsuleSwift` target:
+Normally you'll want to depend on the `ParaSwift` target:
 
   
 
 ```swift
 
-.product(name: "CapsuleSwift", package: "CapsuleSwift")
+.product(name: "ParaSwift", package: "ParaSwift")
 
 ```
 
@@ -70,7 +70,7 @@ Normally you'll want to depend on the `CapsuleSwift` target:
 
   
 
-CapsuleSwift utilizes native passkeys for authentication and wallet information. In order to use native passkeys in your app you will need several things
+ParaSwift utilizes native passkeys for authentication and wallet information. In order to use native passkeys in your app you will need several things
 
   
 
@@ -105,7 +105,7 @@ This will allow you to use passkeys that have been created on any app that uses 
 
 In order to set your API Key and desired environment in the example app, please copy the file locations at Configs/example into the root level of your project and name it EnvDebug for development, and EnvRelease for production. This is only an example of how to manage your environment variables.
 
-## Using Capsule Swift
+## Using ParaSwift
 
   
 
@@ -113,7 +113,7 @@ In order to set your API Key and desired environment in the example app, please 
 
   
 
-CapsuleSwift provides an interface to Capsule services from within iOS applications using SwiftUI (Support for UIKit coming soon).
+ParaSwift provides an interface to Capsule services from within iOS applications using SwiftUI (Support for UIKit coming soon).
 
   
 

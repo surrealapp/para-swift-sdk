@@ -4,21 +4,21 @@
 import PackageDescription
 
 let package = Package(
-    name: "CapsuleSwift",
+    name: "ParaSwift",
     platforms: [.iOS(.v16)],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "CapsuleSwift",
-            targets: ["CapsuleSwift"]),
+            name: "ParaSwift",
+            targets: ["ParaSwift"]),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "CapsuleSwift"),
+            name: "ParaSwift"),
         .testTarget(
-            name: "CapsuleSwiftTests",
-            dependencies: ["CapsuleSwift"]),
+            name: "ParaSwiftTests",
+            dependencies: ["ParaSwift"]),
     ]
 )
