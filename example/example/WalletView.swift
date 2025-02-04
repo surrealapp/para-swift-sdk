@@ -4,31 +4,20 @@ import web3swift
 import Web3Core
 
 struct Transaction: Codable {
-    let to: String
-    let value: String
-    let gasLimit: String
-    let maxPriorityFeePerGas: String
-    let maxFeePerGas: String
-    let nonce: String
-    let chainId: String
+    let to: String?
+    let value: String?
+    let gasLimit: String?
+    let gasPrice: String?
+    let maxPriorityFeePerGas: String?
+    let maxFeePerGas: String?
+    let nonce: String?
+    let chainId: String?
+    let smartContractAbi: String?
+    let smartContractFunctionName: String?
+    let smartContractFunctionArgs: [String]?
+    let smartContractByteCode: String?
+    let type: Int?
 }
-
-/*
- {
-     "to": "0x42c9a72c9dfcc92cae0de9510160cea2da27af91",
-     "value": "1000000000000",
-     "gasLimit": "21000",
-     "maxPriorityFeePerGas": "1",
-     "maxFeePerGas": "3",
-     "nonce": "0",
-     "chainId": "11155111",
-     "smartContractAbi": "[{\"inputs\":[],\"name\":\"retrieve\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"num\",\"type\":\"uint256\"}],\"name\":\"store\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
-     "smartContractFunctionName": "",
-     "smartContractFunctionArgs": [],
-     "smartContractByteCode": "",
-     "type": 2
- }
- */
 
 struct WalletView: View {
     @EnvironmentObject var paraManager: ParaManager
@@ -54,14 +43,20 @@ struct WalletView: View {
     }
     
     private func signTransaction() {
-        var transaction: CodableTransaction = .emptyTransaction
-        transaction.value = 100000000000000000
-        transaction.gasLimit = 21000
-        transaction.maxPriorityFeePerGas = 1
-        transaction.nonce = 0
-        transaction.maxFeePerGas = 3
-        transaction.chainID = 11155111
-        transaction.to = EthereumAddress("0x301d75d850c878b160ad9e1e3f6300202de9e97f")!
+        let transaction = Transaction(
+            to: "0x301d75d850c878b160ad9e1e3f6300202de9e97f",
+            value: "1000000000",
+            gasLimit: "21000",
+            gasPrice: nil,
+            maxPriorityFeePerGas: "1000000000",
+            maxFeePerGas: "3000000000",
+            nonce: "2",
+            chainId: "11155111",
+            smartContractAbi: "[{\"inputs\":[],\"name\":\"retrieve\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"num\",\"type\":\"uint256\"}],\"name\":\"store\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+            smartContractFunctionName: "",
+            smartContractFunctionArgs: [],
+            smartContractByteCode: "",
+            type: 2)
         let encodedTransaction = try! JSONEncoder().encode(transaction)
         let b64EncodedTransaction = encodedTransaction.base64EncodedString()
 
@@ -73,21 +68,27 @@ struct WalletView: View {
     }
     
     private func sendTransaction() {
-        var transaction: CodableTransaction = .emptyTransaction
-        transaction.value = 1000000000000000
-        transaction.gasLimit = 21000
-        transaction.maxPriorityFeePerGas = 1
-        transaction.nonce = 0
-        transaction.maxFeePerGas = 3
-        transaction.chainID = 11155111
-        transaction.to = EthereumAddress("0x301d75d850c878b160ad9e1e3f6300202de9e97f")!
+        let transaction = Transaction(
+            to: "0x301d75d850c878b160ad9e1e3f6300202de9e97f",
+            value: "100000000000000",
+            gasLimit: "21000",
+            gasPrice: nil,
+            maxPriorityFeePerGas: "1000000000",
+            maxFeePerGas: "3000000000",
+            nonce: "3",
+            chainId: "11155111",
+            smartContractAbi: "[{\"inputs\":[],\"name\":\"retrieve\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"num\",\"type\":\"uint256\"}],\"name\":\"store\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+            smartContractFunctionName: "",
+            smartContractFunctionArgs: [],
+            smartContractByteCode: "",
+            type: 2)
         let encodedTransaction = try! JSONEncoder().encode(transaction)
         let b64EncodedTransaction = encodedTransaction.base64EncodedString()
         
         Task {
             let _ = try! await paraManager.initEthersSigner(rpcUrl: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8", walletId: paraManager.wallets.first!.id)
-            let sigHex = try! await paraManager.ethersSendTransaction(transactionB64: b64EncodedTransaction, walletId: paraManager.wallets.first!.id)
-            print(sigHex)
+            let txResponse = try! await paraManager.ethersSendTransaction(transactionB64: b64EncodedTransaction, walletId: paraManager.wallets.first!.id)
+            print(txResponse)
         }
     }
     

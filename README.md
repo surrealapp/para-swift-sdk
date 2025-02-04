@@ -218,3 +218,49 @@ let messageSignature = try! await paraManager.signMessage(walletId: wallet.id, m
 }
 
 ```
+
+## Ethers Signer
+
+You may also use the ethers signer to sign messages, sign transactions, and send transactions
+
+### Instantiating the signer
+
+To start, you must instantiate the signer with your preferred JsonRPCProvider URL. For this example, we are using Infura Sepolia and the first wallet in the paraManager.
+
+```swift
+try! await paraManager.initEthersSigner(rpcUrl: "https://sepolia.infura.io/v3/<YOUR_API_KEY>", walletId: paraManager.wallets.first!.id)
+```
+
+After instantiating the ethersSigner, you can sign a message, sign a transaction, or send a transaction
+
+### Signing a Message
+
+```swift
+let message = "Hello, World!"
+let signature = try! await paraManager.ethersSignMessage(message)
+print(signature)
+```
+
+### Signing a Transaction
+
+To sign a transaction, you must first JSONEncode the transaction object, and then b64Encode the resulting data to get the base64 encoded string. This is what needs to be passed to the paraManager signTransaction function.
+
+```swift
+let transaction = Transaction(<TX_PARAMS>)
+let encodedTransaction = try! JSONEncoder().encode(transaction)
+let b64EncodedTransaction = encodedTransaction.base64EncodedString()
+let signature = try! await paraManager.signTransaction(b64EncodedTransaction)
+print(signature)
+```
+
+### Send a Transaction
+
+To send a transaction, you must first JSONEncode the transaction object, and then b64Encode the resulting data to get the base64 encoded string. This is what needs to be passed to the paraManager sendTransaction function.
+
+```swift
+let transaction = Transaction(<TX_PARAMS>)
+let encodedTransaction = try! JSONEncoder().encode(transaction)
+let b64EncodedTransaction = encodedTransaction.base64EncodedString()
+let signedTx = try! await paraManager.sendTransaction(b64EncodedTransaction)
+print(signedTx)
+```

@@ -267,9 +267,9 @@ extension ParaManager {
         return try decodeResult(result, expectedType: String.self, method: "ethersSignTransaction")
     }
     
-    public func ethersSendTransaction(transactionB64: String, walletId: String) async throws -> String {
+    public func ethersSendTransaction(transactionB64: String, walletId: String) async throws -> Any {
         let result = try await postMessage(method: "ethersSendTransaction", arguments: [transactionB64, walletId])
-        return try decodeResult(result, expectedType: String.self, method: "ethersSendTransaction")
+        return result!
     }
     
     public func initEthersSigner(rpcUrl: String, walletId: String) async throws -> Bool {
