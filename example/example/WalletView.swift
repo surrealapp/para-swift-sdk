@@ -1,5 +1,7 @@
 import SwiftUI
 import ParaSwift
+import web3swift
+import Web3Core
 
 struct Transaction: Codable {
     let to: String
@@ -41,70 +43,52 @@ struct WalletView: View {
     @State private var balance: Int?
     
     
-//    private let web3 = Web3(provider: Web3HttpProvider(url: URL(string: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8")!, network: .Custom(networkID: 11155111)))
-//    private let web3 = Web3(rpcURL: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8")
+    private let web3 = Web3(provider: Web3HttpProvider(url: URL(string: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8")!, network: .Custom(networkID: 11155111)))
     
-    func testingstuff() {
-        
-//        let b64RlpEncodedTx = "AuqDqjangAEDglIIlELJpyyd/Mksrg3pUQFgzqLaJ6+RhejUpRAAgMCAgIA="
-        
-//        Task {
-//            let signedTx = try! await capsule.signTransaction(walletId: capsule.wallets.first!.id, rlpEncodedTx: rlpEncodedTx, chainId: "11155111")
-//            print(signedTx)
-//        }
-        
-//        let ethAddress = EthereumAddress(capsule.wallets.first!.address!)!
-//        Task {
-//            let balance = try! await web3.eth.getBalance(for: ethAddress)
-//            self.balance = Int(balance)
-//        }
-        
-        let transaction = Transaction(to: "0x5bc5c2803A6ef66dEC048B39C6696d70673C507d", value: "1000000000000000000", gasLimit: "21000", maxPriorityFeePerGas: "1", maxFeePerGas: "3", nonce: "0", chainId: "11155111")
+    private func fetchBalance() {
+        let ethAddress = EthereumAddress(paraManager.wallets.first!.address!)!
+        Task {
+            let balance = try! await web3.eth.getBalance(for: ethAddress)
+            self.balance = Int(balance)
+        }
+    }
+    
+    private func signTransaction() {
+        var transaction: CodableTransaction = .emptyTransaction
+        transaction.value = 100000000000000000
+        transaction.gasLimit = 21000
+        transaction.maxPriorityFeePerGas = 1
+        transaction.nonce = 0
+        transaction.maxFeePerGas = 3
+        transaction.chainID = 11155111
+        transaction.to = EthereumAddress("0x301d75d850c878b160ad9e1e3f6300202de9e97f")!
         let encodedTransaction = try! JSONEncoder().encode(transaction)
         let b64EncodedTransaction = encodedTransaction.base64EncodedString()
 
         Task {
-            try! await paraManager.initEthersSigner(rpcUrl: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8", walletId: paraManager.wallets.first!.id)
+            let _ = try! await paraManager.initEthersSigner(rpcUrl: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8", walletId: paraManager.wallets.first!.id)
             let sigHex = try! await paraManager.ethersSignTransaction(transactionB64: b64EncodedTransaction, walletId: paraManager.wallets.first!.id)
             print(sigHex)
         }
-//        var transaction2: CodableTransaction = .emptyTransaction
+    }
+    
+    private func sendTransaction() {
+        var transaction: CodableTransaction = .emptyTransaction
+        transaction.value = 1000000000000000
+        transaction.gasLimit = 21000
+        transaction.maxPriorityFeePerGas = 1
+        transaction.nonce = 0
+        transaction.maxFeePerGas = 3
+        transaction.chainID = 11155111
+        transaction.to = EthereumAddress("0x301d75d850c878b160ad9e1e3f6300202de9e97f")!
+        let encodedTransaction = try! JSONEncoder().encode(transaction)
+        let b64EncodedTransaction = encodedTransaction.base64EncodedString()
         
-//        transaction.value = 100000
-//        transaction.gasLimit = 78423
-//        transaction.gasPrice = 2000000000
-
-        
-//        let hashForSig = transaction.hashForSignature()!
-//        let b64Encoded = hashForSig.base64EncodedString()
-//        
-//        Task {
-//            let signature = try! await capsule.signMessage(walletId: capsule.wallets.first!.id, message: b64Encoded)
-//            print(signature)
-//        }
-        
-//        firstly {
-//            web3.eth.blockNumber()
-//        }.then { blockNumber in
-//            print(blockNumber)
-//            return web3.eth.getBalance(address: EthereumAddress(hexString: capsule.wallets.first!.address!)!, block: .block(blockNumber.quantity))
-//        }.done { balance in
-//            print(balance)
-//            self.balance = Int(balance.quantity)
-//        }.catch { error in
-//            print(error)
-//        }
-
-//
-//        let transaction = EthereumTransaction(nonce: 1, gasPrice: 1000000000, gasLimit: 21000, from: EthereumAddress(hexString: capsule.wallets.first!.address!)!, to: EthereumAddress(hexString: "0x4be6f1633636bf8b62e6e43573e77d6968dd2a68")!, value: 500000000)
-//
-//        let jsonTransaction = try! JSONEncoder().encode(transaction)
-//        let base64transaction = jsonTransaction.base64EncodedString()
-//        
-//        Task {
-//            let signedTx = try! await capsule.signTransaction(walletId: capsule.wallets.first!.id, rlpEncodedTx: "AuqDqjangAEDglIIlELJpyyd/Mksrg3pUQFgzqLaJ6+RhejUpRAAgMCAgIA=", chainId: "11155111")
-//            print(signedTx)
-//        }
+        Task {
+            let _ = try! await paraManager.initEthersSigner(rpcUrl: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8", walletId: paraManager.wallets.first!.id)
+            let sigHex = try! await paraManager.ethersSendTransaction(transactionB64: b64EncodedTransaction, walletId: paraManager.wallets.first!.id)
+            print(sigHex)
+        }
     }
     
     var body: some View {
@@ -212,6 +196,23 @@ struct WalletView: View {
                     .buttonStyle(.bordered)
                 }
                 
+                HStack {
+                    Button("Fetch Balance") {
+                        fetchBalance()
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Button("Ethers Send Tx") {
+                        sendTransaction()
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Button("Ethers Sign Tx") {
+                        signTransaction()
+                    }
+                    .buttonStyle(.bordered)
+                }
+                
                 Text(result)
                     .font(.subheadline)
                     .foregroundColor(.secondary)
@@ -271,8 +272,5 @@ struct WalletView: View {
         }
         .padding()
         .navigationTitle("Home")
-        .onAppear {
-            testingstuff()
-        }
     }
 }

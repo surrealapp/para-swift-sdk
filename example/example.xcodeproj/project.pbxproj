@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E8315DAD2D51A1A100FFF8C8 /* web3swift in Frameworks */ = {isa = PBXBuildFile; productRef = E8315DAC2D51A1A100FFF8C8 /* web3swift */; };
 		E86A473F2D0CA0A400546CC2 /* EmailAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86A473E2D0CA0A400546CC2 /* EmailAuthView.swift */; };
 		E86A47412D0CA63700546CC2 /* AppRootManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86A47402D0CA62F00546CC2 /* AppRootManager.swift */; };
 		E86A475B2D1F13CB00546CC2 /* PhoneAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E86A475A2D1F13CB00546CC2 /* PhoneAuthView.swift */; };
@@ -46,6 +47,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E8C3D8652D515B3700966556 /* ParaSwift in Frameworks */,
+				E8315DAD2D51A1A100FFF8C8 /* web3swift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,6 +126,7 @@
 			name = example;
 			packageProductDependencies = (
 				E8C3D8642D515B3700966556 /* ParaSwift */,
+				E8315DAC2D51A1A100FFF8C8 /* web3swift */,
 			);
 			productName = example;
 			productReference = E8F93B282C21EBED006AA3F6 /* example.app */;
@@ -155,6 +158,7 @@
 			mainGroup = E8F93B1F2C21EBED006AA3F6;
 			packageReferences = (
 				E8C3D8632D515B3700966556 /* XCLocalSwiftPackageReference "../../CapsuleSwift" */,
+				E8315DAB2D51A1A100FFF8C8 /* XCRemoteSwiftPackageReference "web3swift" */,
 			);
 			productRefGroup = E8F93B292C21EBED006AA3F6 /* Products */;
 			projectDirPath = "";
@@ -423,7 +427,23 @@
 		};
 /* End XCLocalSwiftPackageReference section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		E8315DAB2D51A1A100FFF8C8 /* XCRemoteSwiftPackageReference "web3swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/web3swift-team/web3swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
 /* Begin XCSwiftPackageProductDependency section */
+		E8315DAC2D51A1A100FFF8C8 /* web3swift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E8315DAB2D51A1A100FFF8C8 /* XCRemoteSwiftPackageReference "web3swift" */;
+			productName = web3swift;
+		};
 		E8C3D8642D515B3700966556 /* ParaSwift */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ParaSwift;
