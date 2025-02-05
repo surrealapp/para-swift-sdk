@@ -62,18 +62,18 @@ public class ParaManager: NSObject, ObservableObject {
         }
     }
     
-    private func postMessage(method: String, arguments: [Encodable]) async throws -> Any? {
+    internal func postMessage(method: String, arguments: [Encodable]) async throws -> Any? {
         return try await paraWebView.postMessage(method: method, arguments: arguments)
     }
     
-    private func decodeResult<T>(_ result: Any?, expectedType: T.Type, method: String) throws -> T {
+    internal func decodeResult<T>(_ result: Any?, expectedType: T.Type, method: String) throws -> T {
         guard let value = result as? T else {
             throw ParaError.bridgeError("METHOD_ERROR<\(method)>: Invalid result format expected \(T.self), but got \(String(describing: result))")
         }
         return value
     }
     
-    private func decodeDictionaryResult<T>(_ result: Any?, expectedType: T.Type, method: String, key: String) throws -> T {
+    internal func decodeDictionaryResult<T>(_ result: Any?, expectedType: T.Type, method: String, key: String) throws -> T {
         let dict = try decodeResult(result, expectedType: [String: Any].self, method: method)
         guard let value = dict[key] as? T else {
             throw ParaError.bridgeError("KEY_ERROR<\(method)-\(key)>: Missing or invalid key result")
@@ -253,33 +253,6 @@ extension ParaManager {
     public func signTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
         let result = try await postMessage(method: "signTransaction", arguments: [walletId, rlpEncodedTx, chainId])
         return try decodeDictionaryResult(result, expectedType: String.self, method: "signTransaction", key: "signature")
-    }
-    
-    public func sendTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
-        let result = try await postMessage(method: "sendTransaction", arguments: [walletId, rlpEncodedTx, chainId])
-        return try decodeDictionaryResult(result, expectedType: String.self, method: "sendTransaction", key: "signature")
-    }
-}
-@available(iOS 16.4,*)
-extension ParaManager {
-    public func ethersSignMessage(message: String) async throws -> String {
-        let result = try await postMessage(method: "ethersSignMessage", arguments: [message])
-        return try decodeResult(result, expectedType: String.self, method: "ethersSignMessage")
-    }
-    
-    public func ethersSignTransaction(transactionB64: String, walletId: String) async throws -> String {
-        let result = try await postMessage(method: "ethersSignTransaction", arguments: [transactionB64, walletId])
-        return try decodeResult(result, expectedType: String.self, method: "ethersSignTransaction")
-    }
-    
-    public func ethersSendTransaction(transactionB64: String, walletId: String) async throws -> Any {
-        let result = try await postMessage(method: "ethersSendTransaction", arguments: [transactionB64, walletId])
-        return result!
-    }
-    
-    public func initEthersSigner(rpcUrl: String, walletId: String) async throws -> Bool {
-        let result = try await postMessage(method: "initEthersSigner", arguments: [walletId, rpcUrl])
-        return try decodeResult(result, expectedType: Bool.self, method: "initEthersSigner")
     }
 }
 

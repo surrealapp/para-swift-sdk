@@ -3,24 +3,9 @@ import ParaSwift
 import web3swift
 import Web3Core
 
-struct Transaction: Codable {
-    let to: String?
-    let value: String?
-    let gasLimit: String?
-    let gasPrice: String?
-    let maxPriorityFeePerGas: String?
-    let maxFeePerGas: String?
-    let nonce: String?
-    let chainId: String?
-    let smartContractAbi: String?
-    let smartContractFunctionName: String?
-    let smartContractFunctionArgs: [String]?
-    let smartContractByteCode: String?
-    let type: Int?
-}
-
 struct WalletView: View {
     @EnvironmentObject var paraManager: ParaManager
+    @EnvironmentObject var paraEvmSigner: ParaEvmSigner
     @EnvironmentObject var appRootManager: AppRootManager
     
     @State private var messageToSign = ""
@@ -30,7 +15,6 @@ struct WalletView: View {
     @State private var isFetching = false
     @State private var errorMessage: String?
     @State private var balance: Int?
-    
     
     private let web3 = Web3(provider: Web3HttpProvider(url: URL(string: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8")!, network: .Custom(networkID: 11155111)))
     
@@ -43,7 +27,7 @@ struct WalletView: View {
     }
     
     private func signTransaction() {
-        let transaction = Transaction(
+        let transaction = EVMTransaction(
             to: "0x301d75d850c878b160ad9e1e3f6300202de9e97f",
             value: "1000000000",
             gasLimit: "21000",
@@ -57,18 +41,15 @@ struct WalletView: View {
             smartContractFunctionArgs: [],
             smartContractByteCode: "",
             type: 2)
-        let encodedTransaction = try! JSONEncoder().encode(transaction)
-        let b64EncodedTransaction = encodedTransaction.base64EncodedString()
 
         Task {
-            let _ = try! await paraManager.initEthersSigner(rpcUrl: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8", walletId: paraManager.wallets.first!.id)
-            let sigHex = try! await paraManager.ethersSignTransaction(transactionB64: b64EncodedTransaction, walletId: paraManager.wallets.first!.id)
-            print(sigHex)
+            let sigHex = try! await paraEvmSigner.signTransaction(transactionB64: transaction.b64Encoded())
+            self.result = sigHex
         }
     }
     
     private func sendTransaction() {
-        let transaction = Transaction(
+        let transaction = EVMTransaction(
             to: "0x301d75d850c878b160ad9e1e3f6300202de9e97f",
             value: "100000000000000",
             gasLimit: "21000",
@@ -86,8 +67,7 @@ struct WalletView: View {
         let b64EncodedTransaction = encodedTransaction.base64EncodedString()
         
         Task {
-            let _ = try! await paraManager.initEthersSigner(rpcUrl: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8", walletId: paraManager.wallets.first!.id)
-            let txResponse = try! await paraManager.ethersSendTransaction(transactionB64: b64EncodedTransaction, walletId: paraManager.wallets.first!.id)
+            let txResponse = try! await paraEvmSigner.sendTransaction(transactionB64: b64EncodedTransaction)
             print(txResponse)
         }
     }
@@ -105,7 +85,7 @@ struct WalletView: View {
                 Text("Wallet Address: \(address)")
                     .font(.body)
                     .padding(.horizontal)
-            
+                
                 if let balance {
                     Text("Balance: \(balance)")
                 }
@@ -203,12 +183,12 @@ struct WalletView: View {
                     }
                     .buttonStyle(.bordered)
                     
-                    Button("Ethers Send Tx") {
+                    Button("EVM Send Tx") {
                         sendTransaction()
                     }
                     .buttonStyle(.bordered)
                     
-                    Button("Ethers Sign Tx") {
+                    Button("EVM Sign Tx") {
                         signTransaction()
                     }
                     .buttonStyle(.bordered)
@@ -273,5 +253,10 @@ struct WalletView: View {
         }
         .padding()
         .navigationTitle("Home")
+        .onAppear {
+            Task {
+                try! await paraEvmSigner.selectWallet(walletId: paraManager.wallets.first!.id)
+            }
+        }
     }
 }
