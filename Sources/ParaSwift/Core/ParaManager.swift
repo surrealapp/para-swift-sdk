@@ -262,6 +262,11 @@ extension ParaManager {
 }
 @available(iOS 16.4,*)
 extension ParaManager {
+    public func ethersSignMessage(message: String) async throws -> String {
+        let result = try await postMessage(method: "ethersSignMessage", arguments: [message])
+        return try decodeResult(result, expectedType: String.self, method: "ethersSignMessage")
+    }
+    
     public func ethersSignTransaction(transactionB64: String, walletId: String) async throws -> String {
         let result = try await postMessage(method: "ethersSignTransaction", arguments: [transactionB64, walletId])
         return try decodeResult(result, expectedType: String.self, method: "ethersSignTransaction")
