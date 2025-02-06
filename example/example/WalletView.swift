@@ -1,8 +1,11 @@
 import SwiftUI
 import ParaSwift
+import web3swift
+import Web3Core
 
 struct WalletView: View {
     @EnvironmentObject var paraManager: ParaManager
+    @EnvironmentObject var paraEvmSigner: ParaEvmSigner
     @EnvironmentObject var appRootManager: AppRootManager
     
     @State private var messageToSign = ""
@@ -11,6 +14,63 @@ struct WalletView: View {
     @State private var isSigning = false
     @State private var isFetching = false
     @State private var errorMessage: String?
+    @State private var balance: Int?
+    
+    private let web3 = Web3(provider: Web3HttpProvider(url: URL(string: "https://sepolia.infura.io/v3/961364684c7346c080994baab1469ea8")!, network: .Custom(networkID: 11155111)))
+    
+    private func fetchBalance() {
+        let ethAddress = EthereumAddress(paraManager.wallets.first!.address!)!
+        Task {
+            let balance = try! await web3.eth.getBalance(for: ethAddress)
+            self.balance = Int(balance)
+        }
+    }
+    
+    private func signTransaction() {
+        let transaction = EVMTransaction(
+            to: "0x301d75d850c878b160ad9e1e3f6300202de9e97f",
+            value: "1000000000",
+            gasLimit: "21000",
+            gasPrice: nil,
+            maxPriorityFeePerGas: "1000000000",
+            maxFeePerGas: "3000000000",
+            nonce: "2",
+            chainId: "11155111",
+            smartContractAbi: "[{\"inputs\":[],\"name\":\"retrieve\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"num\",\"type\":\"uint256\"}],\"name\":\"store\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+            smartContractFunctionName: "",
+            smartContractFunctionArgs: [],
+            smartContractByteCode: "",
+            type: 2)
+
+        Task {
+            let sigHex = try! await paraEvmSigner.signTransaction(transactionB64: transaction.b64Encoded())
+            self.result = sigHex
+        }
+    }
+    
+    private func sendTransaction() {
+        let transaction = EVMTransaction(
+            to: "0x301d75d850c878b160ad9e1e3f6300202de9e97f",
+            value: "100000000000000",
+            gasLimit: "21000",
+            gasPrice: nil,
+            maxPriorityFeePerGas: "1000000000",
+            maxFeePerGas: "3000000000",
+            nonce: "3",
+            chainId: "11155111",
+            smartContractAbi: "[{\"inputs\":[],\"name\":\"retrieve\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"num\",\"type\":\"uint256\"}],\"name\":\"store\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+            smartContractFunctionName: "",
+            smartContractFunctionArgs: [],
+            smartContractByteCode: "",
+            type: 2)
+        let encodedTransaction = try! JSONEncoder().encode(transaction)
+        let b64EncodedTransaction = encodedTransaction.base64EncodedString()
+        
+        Task {
+            let txResponse = try! await paraEvmSigner.sendTransaction(transactionB64: b64EncodedTransaction)
+            print(txResponse)
+        }
+    }
     
     var body: some View {
         VStack(spacing: 20) {
@@ -25,6 +85,10 @@ struct WalletView: View {
                 Text("Wallet Address: \(address)")
                     .font(.body)
                     .padding(.horizontal)
+                
+                if let balance {
+                    Text("Balance: \(balance)")
+                }
                 
                 TextField("Enter a message to sign", text: $messageToSign)
                     .autocorrectionDisabled()
@@ -106,6 +170,28 @@ struct WalletView: View {
                         }
                     }
                     .buttonStyle(.bordered)
+                    
+                    Button("Copy Address") {
+                        UIPasteboard.general.string = paraManager.wallets.first!.address!
+                    }
+                    .buttonStyle(.bordered)
+                }
+                
+                HStack {
+                    Button("Fetch Balance") {
+                        fetchBalance()
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Button("EVM Send Tx") {
+                        sendTransaction()
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Button("EVM Sign Tx") {
+                        signTransaction()
+                    }
+                    .buttonStyle(.bordered)
                 }
                 
                 Text(result)
@@ -167,5 +253,10 @@ struct WalletView: View {
         }
         .padding()
         .navigationTitle("Home")
+        .onAppear {
+            Task {
+                try! await paraEvmSigner.selectWallet(walletId: paraManager.wallets.first!.id)
+            }
+        }
     }
 }

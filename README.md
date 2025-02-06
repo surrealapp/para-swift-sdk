@@ -218,3 +218,53 @@ let messageSignature = try! await paraManager.signMessage(walletId: wallet.id, m
 }
 
 ```
+
+## EVM Signer
+
+You may also use the evm signer to sign messages, sign transactions, and send transactions
+
+### Instantiating the signer
+
+To start, you must instantiate the signer with your preferred JsonRPCProvider URL. For this example, we are using Infura Sepolia and the first wallet in the paraManager. The wallet is optional, and can be selected / changed after instantiation.
+
+```swift
+let paraEvmSigner = try! ParaEvmSigner(paraManager: paraManager, rpcUrl: "https://sepolia.infura.io/v3/<YOUR_API_KEY>", walletId: paraManager.wallets.first!.id)
+```
+
+### Select a Wallet
+
+```swift
+try! await paraEvmSigner.selectWallet(walletId: paraManager.wallets.first!.id)
+```
+
+### Signing a Message
+
+```swift
+let message = "Hello, World!"
+let signature = try! await paraEvmSigner.signMessage(message)
+print(signature)
+```
+
+### Signing a Transaction
+
+To sign a transaction, you must first JSONEncode the transaction object, and then b64Encode the resulting data to get the base64 encoded string. This is what needs to be passed to the paraEvmSigner signTransaction function.
+
+```swift
+let transaction = Transaction(<TX_PARAMS>)
+let encodedTransaction = try! JSONEncoder().encode(transaction)
+let b64EncodedTransaction = encodedTransaction.base64EncodedString()
+let signature = try! await paraEvmSigner.signTransaction(b64EncodedTransaction)
+print(signature)
+```
+
+### Sending a Transaction
+
+To send a transaction, you must first JSONEncode the transaction object, and then b64Encode the resulting data to get the base64 encoded string. This is what needs to be passed to the paraEvmSigner sendTransaction function.
+
+```swift
+let transaction = Transaction(<TX_PARAMS>)
+let encodedTransaction = try! JSONEncoder().encode(transaction)
+let b64EncodedTransaction = encodedTransaction.base64EncodedString()
+let signedTx = try! await paraEvmSigner.sendTransaction(b64EncodedTransaction)
+print(signedTx)
+```
