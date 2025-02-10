@@ -102,13 +102,26 @@ extension ParaManager {
         _ = try await postMessage(method: "createUserByPhone", arguments: [phoneNumber, countryCode])
     }
     
+    private func authInfoHelper(authInfo: AuthInfo?) async throws -> Any? {
+        if let authInfo = authInfo as? EmailAuthInfo {
+            return try await postMessage(method: "getWebChallenge", arguments: [authInfo])
+        }
+        
+        if let authInfo = authInfo as? PhoneAuthInfo {
+            return try await postMessage(method: "getWebChallenge", arguments: [authInfo])
+        }
+        
+        return try await postMessage(method: "getWebChallenge", arguments: [])
+    }
+    
     @available(macOS 13.3, iOS 16.4, *)
     @MainActor
-    public func login(authorizationController: AuthorizationController) async throws {
-        let getWebChallengeResult = try await postMessage(method: "getWebChallenge", arguments: [])
+    public func login(authorizationController: AuthorizationController, authInfo: AuthInfo?) async throws {
+        let getWebChallengeResult = try await authInfoHelper(authInfo: authInfo)
         let challenge = try decodeDictionaryResult(getWebChallengeResult, expectedType: String.self, method: "getWebChallenge", key: "challenge")
+        let allowedPublicKeys = try decodeDictionaryResult(getWebChallengeResult, expectedType: [String]?.self, method: "getWebChallenge", key: "allowedPublicKeys") ?? []
         
-        let signIntoPasskeyAccountResult = try await passkeysManager.signIntoPasskeyAccount(authorizationController: authorizationController, challenge: challenge)
+        let signIntoPasskeyAccountResult = try await passkeysManager.signIntoPasskeyAccount(authorizationController: authorizationController, challenge: challenge, allowedPublicKeys: allowedPublicKeys)
         
         let id = signIntoPasskeyAccountResult.credentialID.base64URLEncodedString()
         let authenticatorData = signIntoPasskeyAccountResult.rawAuthenticatorData.base64URLEncodedString()
@@ -253,6 +266,14 @@ extension ParaManager {
     public func signTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
         let result = try await postMessage(method: "signTransaction", arguments: [walletId, rlpEncodedTx, chainId])
         return try decodeDictionaryResult(result, expectedType: String.self, method: "signTransaction", key: "signature")
+    }
+}
+
+@available(iOS 16.4,*)
+extension ParaManager {
+    public func getOAuthURL(provider: String, deeplinkUrl: String) async throws -> String {
+        let result = try await postMessage(method: "getOAuthURL", arguments: [provider, deeplinkUrl])
+        return try decodeResult(result, expectedType: String.self, method: "getOAuthURL")
     }
 }
 
