@@ -1,25 +1,5 @@
 import Foundation
 
-public protocol AuthInfo: Codable {}
-
-public struct EmailAuthInfo: AuthInfo {
-    let email: String
-    
-    public init(email: String) {
-        self.email = email
-    }
-}
-
-public struct PhoneAuthInfo: AuthInfo {
-    let phone: String
-    let countryCode: String
-    
-    public init(phone: String, countryCode: String) {
-        self.phone = phone
-        self.countryCode = countryCode
-    }
-}
-
 public enum ParaEnvironment: Hashable {
     case dev(relyingPartyId: String, jsBridgeUrl: URL?)
     case sandbox
