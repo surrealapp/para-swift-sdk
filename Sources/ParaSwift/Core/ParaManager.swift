@@ -272,6 +272,7 @@ extension ParaManager {
 public enum ParaError: Error, CustomStringConvertible {
     case bridgeError(String)
     case bridgeTimeoutError
+    case error(String)
     
     public var description: String {
         switch self {
@@ -279,6 +280,8 @@ public enum ParaError: Error, CustomStringConvertible {
             return "The following error happened while the javascript bridge was executing: \(info)"
         case .bridgeTimeoutError:
             return "The javascript bridge did not respond in time and the continuation has been cancelled."
+        case .error(let info):
+            return "An error occurred: \(info)"
         }
     }
 }
