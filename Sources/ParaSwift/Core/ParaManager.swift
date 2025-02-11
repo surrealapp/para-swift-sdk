@@ -269,14 +269,6 @@ extension ParaManager {
     }
 }
 
-@available(iOS 16.4,*)
-extension ParaManager {
-    public func getOAuthURL(provider: String, deeplinkUrl: String) async throws -> String {
-        let result = try await postMessage(method: "getOAuthURL", arguments: [provider, deeplinkUrl])
-        return try decodeResult(result, expectedType: String.self, method: "getOAuthURL")
-    }
-}
-
 public enum ParaError: Error, CustomStringConvertible {
     case bridgeError(String)
     case bridgeTimeoutError
