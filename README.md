@@ -1,4 +1,3 @@
-
 # Para Swift SDK
 
   
@@ -268,3 +267,129 @@ let b64EncodedTransaction = encodedTransaction.base64EncodedString()
 let signedTx = try! await paraEvmSigner.sendTransaction(b64EncodedTransaction)
 print(signedTx)
 ```
+
+## MetaMask Integration
+
+ParaSwift provides seamless integration with MetaMask Mobile through the `MetaMaskConnector` class. This allows your iOS app to connect with MetaMask wallets, sign messages, and send transactions.
+
+### Setup MetaMask Connector
+
+First, configure your app's Info.plist to allow querying MetaMask URL schemes:
+
+```xml
+<key>LSApplicationQueriesSchemes</key>
+<array>
+    <string>metamask</string>
+</array>
+```
+
+This configuration is required to detect if MetaMask is installed on the device.
+
+Then initialize the MetaMask connector with your app's configuration:
+
+```swift
+// Create MetaMask configuration
+let bundleId = Bundle.main.bundleIdentifier ?? ""
+let urlScheme = "your-app-scheme" // Must match URL scheme in Info.plist
+let metaMaskConfig = MetaMaskConfig(
+    appName: "Your App Name",
+    appId: bundleId,
+    apiVersion: "1.0"
+)
+
+// Initialize the connector
+let metaMaskConnector = MetaMaskConnector(
+    para: paraManager,
+    appUrl: "https://\(bundleId)",  // Your app's URL
+    deepLink: urlScheme,            // Your app's custom URL scheme
+    config: metaMaskConfig
+)
+```
+
+> **Note:** Make sure to configure your app's URL scheme in Info.plist under `CFBundleURLTypes`. The `deepLink` parameter should match this URL scheme.
+
+### Handle Deep Links
+
+Add deep link handling in your SwiftUI app's main entry point:
+
+```swift
+@main
+struct YourApp: App {
+    @StateObject private var metaMaskConnector: MetaMaskConnector
+    
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .onOpenURL { url in
+                    // Handle MetaMask deep links
+                    metaMaskConnector.handleURL(url)
+                }
+        }
+    }
+}
+```
+
+### Connect to MetaMask
+
+Connect to MetaMask and get the user's accounts:
+
+```swift
+do {
+    try await metaMaskConnector.connect()
+    // Connection successful
+    // Access connected accounts via metaMaskConnector.accounts
+} catch {
+    // Handle connection error
+}
+```
+
+### Sign Messages
+
+Request message signing from the connected MetaMask wallet:
+
+```swift
+guard let account = metaMaskConnector.accounts.first else { return }
+
+do {
+    let signature = try await metaMaskConnector.signMessage(
+        "Message to sign",
+        account: account
+    )
+    // Use the signature
+} catch {
+    // Handle signing error
+}
+```
+
+### Send Transactions
+
+Send transactions through the connected MetaMask wallet:
+
+```swift
+guard let account = metaMaskConnector.accounts.first else { return }
+
+let transaction: [String: String] = [
+    "from": account,
+    "to": "0x...", // Recipient address
+    "value": "0x...", // Value in wei (hex)
+    "gasLimit": "0x..." // Gas limit (hex)
+]
+
+do {
+    let txHash = try await metaMaskConnector.sendTransaction(
+        transaction,
+        account: account
+    )
+    // Transaction sent successfully
+} catch {
+    // Handle transaction error
+}
+```
+
+### Properties
+
+The MetaMask connector provides several useful properties:
+
+- `isConnected`: Boolean indicating if MetaMask is connected
+- `accounts`: Array of connected MetaMask account addresses
+- `chainId`: Current chain ID (e.g., "0x1" for Ethereum mainnet)

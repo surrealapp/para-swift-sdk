@@ -1,11 +1,14 @@
 import SwiftUI
 import AuthenticationServices
 import WebKit
+import os
 
 #if os(iOS)
 @available(iOS 16.4,*)
 @MainActor
 public class ParaManager: NSObject, ObservableObject {
+    private let logger = Logger(subsystem: "com.paraSwift", category: "ParaManager")
+    
     @Published public var wallets: [Wallet] = []
     @Published public var sessionState: ParaSessionState = .unknown
     
@@ -137,6 +140,7 @@ extension ParaManager {
     }
     
     public func verify(verificationCode: String) async throws -> String {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "verifyEmail", arguments: [verificationCode])
         let resultString = try decodeResult(result, expectedType: String.self, method: "verifyEmail")
         
@@ -150,6 +154,7 @@ extension ParaManager {
     }
     
     public func verifyByPhone(verificationCode: String) async throws -> String {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "verifyPhone", arguments: [verificationCode])
         let resultString = try decodeResult(result, expectedType: String.self, method: "verifyPhone")
         
@@ -164,6 +169,7 @@ extension ParaManager {
     
     @available(macOS 13.3, iOS 16.4, *)
     public func generatePasskey(identifier: String, biometricsId: String, authorizationController: AuthorizationController) async throws {
+        try await ensureWebViewReady()
         var userHandle = Data(count: 32)
         _ = userHandle.withUnsafeMutableBytes {
             SecRandomCopyBytes(kSecRandomDefault, 32, $0.baseAddress!)
@@ -188,34 +194,41 @@ extension ParaManager {
     }
     
     public func setup2FA() async throws -> String {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "setup2FA", arguments: [])
         return try decodeDictionaryResult(result, expectedType: String.self, method: "setup2FA", key: "uri")
     }
     
     public func enable2FA() async throws {
+        try await ensureWebViewReady()
         _ = try await postMessage(method: "enable2FA", arguments: [])
     }
     
     public func is2FASetup() async throws -> Bool {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "check2FAStatus", arguments: [])
         return try decodeDictionaryResult(result, expectedType: Bool.self, method: "check2FAStatus", key: "isSetup")
     }
     
     public func resendVerificationCode() async throws {
+        try await ensureWebViewReady()
         _ = try await postMessage(method: "resendVerificationCode", arguments: [])
     }
     
     public func isFullyLoggedIn() async throws -> Bool {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "isFullyLoggedIn", arguments: [])
         return try decodeResult(result, expectedType: Bool.self, method: "isFullyLoggedIn")
     }
     
     public func isSessionActive() async throws -> Bool {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "isSessionActive", arguments: [])
         return try decodeResult(result, expectedType: Bool.self, method: "isSessionActive")
     }
     
     public func exportSession() async throws -> String {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "exportSession", arguments: [])
         return try decodeResult(result, expectedType: String.self, method: "exportSession")
     }
@@ -235,22 +248,26 @@ extension ParaManager {
 extension ParaManager {
     @MainActor
     public func createWallet(type: WalletType, skipDistributable: Bool) async throws {
+        try await ensureWebViewReady()
         _ = try await postMessage(method: "createWallet", arguments: [type.rawValue, skipDistributable])
         self.wallets = try await fetchWallets()
         self.sessionState = .activeLoggedIn
     }
     
     public func fetchWallets() async throws -> [Wallet] {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "fetchWallets", arguments: [])
         let walletsData = try decodeResult(result, expectedType: [[String: Any]].self, method: "fetchWallets")
         return walletsData.map { Wallet(result: $0) }
     }
     
     public func distributeNewWalletShare(walletId: String, userShare: String) async throws {
+        try await ensureWebViewReady()
         _ = try await postMessage(method: "distributeNewWalletShare", arguments: [walletId, userShare])
     }
     
     public func getEmail() async throws -> String {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "getEmail", arguments: [])
         return try decodeResult(result, expectedType: String.self, method: "getEmail")
     }
@@ -259,13 +276,41 @@ extension ParaManager {
 @available(iOS 16.4,*)
 extension ParaManager {
     public func signMessage(walletId: String, message: String) async throws -> String {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "signMessage", arguments: [walletId, message.toBase64()])
         return try decodeDictionaryResult(result, expectedType: String.self, method: "signMessage", key: "signature")
     }
     
     public func signTransaction(walletId: String, rlpEncodedTx: String, chainId: String) async throws -> String {
+        try await ensureWebViewReady()
         let result = try await postMessage(method: "signTransaction", arguments: [walletId, rlpEncodedTx, chainId])
         return try decodeDictionaryResult(result, expectedType: String.self, method: "signTransaction", key: "signature")
+    }
+}
+
+@available(iOS 16.4,*)
+extension ParaManager {
+    private func ensureWebViewReady() async throws {
+        if !paraWebView.isReady {
+            logger.debug("Waiting for WebView initialization...")
+            await waitForParaReady()
+            guard paraWebView.isReady else {
+                throw ParaError.bridgeError("WebView failed to initialize")
+            }
+        }
+    }
+
+    /// Logs in with an external wallet address
+    /// - Parameters:
+    ///   - externalAddress: The external wallet address
+    ///   - type: The type of wallet (e.g. "EVM")
+    internal func externalWalletLogin(externalAddress: String, type: String) async throws {
+        try await ensureWebViewReady()
+        
+        _ = try await postMessage(method: "externalWalletLogin", arguments: [externalAddress, type])
+        self.sessionState = .activeLoggedIn
+        
+        logger.debug("External wallet login completed for address: \(externalAddress)")
     }
 }
 
