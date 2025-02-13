@@ -1,6 +1,3 @@
-// swift-tools-version: 5.10
-// The swift-tools-version declares the minimum version of Swift required to build this package.
-
 import PackageDescription
 
 let package = Package(
@@ -12,11 +9,15 @@ let package = Package(
             name: "ParaSwift",
             targets: ["ParaSwift"]),
     ],
+    dependencies: [
+        // Add BigInt as a dependency
+        .package(url: "https://github.com/attaswift/BigInt.git", from: "5.5.1") // Update version if needed
+    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "ParaSwift"),
+            name: "ParaSwift",
+            dependencies: ["BigInt"]), // Add BigInt to the ParaSwift target
         .testTarget(
             name: "ParaSwiftTests",
             dependencies: ["ParaSwift"]),
